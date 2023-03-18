@@ -1,0 +1,6 @@
+{{.host}} {
+    basicauth {
+        tester {{.password}}
+    }
+    reverse_proxy :{{.port}}
+}

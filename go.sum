@@ -1,0 +1,14 @@
+github.com/andreyvit/envloader v0.0.0-20230318112307-11352e2d3468 h1:dYRFGqr3mgxv4k0fx8eAJrN0mod5+DIyZnWy4wTAidc=
+github.com/andreyvit/envloader v0.0.0-20230318112307-11352e2d3468/go.mod h1:Y42Po2x1aHSYOjSjRJUMRxPvJfEnkkHQ3hCzaSkYRKg=
+github.com/andreyvit/httpform v0.0.0-20230317113906-c6b9ae229f96 h1:19e2UmF1oLPISMhJU5qEmcfxWQA42Tj2fKTp6GJsraE=
+github.com/andreyvit/httpform v0.0.0-20230317113906-c6b9ae229f96/go.mod h1:wQSm2DISwNRAOpsS73VRxyIBT9ZCW0t355OM3bFekMU=
+github.com/andreyvit/httpserver v0.0.0-20230318205843-f3fda2b554b5 h1:0ZOOtzyfCmLo7uC4L5T0RQz1KfnO1CgloBiyVzpYP7Y=
+github.com/andreyvit/httpserver v0.0.0-20230318205843-f3fda2b554b5/go.mod h1:EB1+OF1waj9wGowDE1XqHLmET8vq9dsEc/exB3gKlgI=
+github.com/andreyvit/minicomponents v0.0.0-20230318211733-d67f3ef03ee8 h1:OohM8Nwvy8uDdThxPa/6ZwcCit/kFWB/+hiXoqNeXcM=
+github.com/andreyvit/minicomponents v0.0.0-20230318211733-d67f3ef03ee8/go.mod h1:JUl5yFUwD4u+o6L8osxSXC4CeFXuM9w9Y/TDppsH1/M=
+github.com/andreyvit/openai v0.0.0-20230318101313-1a42ea08c3f4 h1:UqTRR/oVVFvhrqQ63mjPCgjeRZ3x7hy50824io/a6ic=
+github.com/andreyvit/openai v0.0.0-20230318101313-1a42ea08c3f4/go.mod h1:lkTa9ygN0wYaFpLVkpRzelKuj/nZYSZS24SAO5b3kNQ=
+github.com/uptrace/bunrouter v1.0.20 h1:jNvYNcJxF+lSYBQAaQjnE6I11Zs0m+3M5Ek7fq/Tp4c=
+github.com/uptrace/bunrouter v1.0.20/go.mod h1:TwT7Bc0ztF2Z2q/ZzMuSVkcb/Ig/d3MQeP2cxn3e1hI=
+golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0 h1:pVgRXcIictcr+lBQIFeiwuwtDIs4eL21OuM9nyAADmo=
+golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
