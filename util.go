@@ -5,9 +5,11 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"io/fs"
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -73,4 +75,45 @@ func trimPort(host string) string {
 		return host
 	}
 	return h
+}
+
+func writeFileAtomic(path string, data []byte, perm fs.FileMode) (err error) {
+	temp, err := os.CreateTemp(filepath.Dir(path), ".~"+filepath.Base(path)+".*")
+	if err != nil {
+		return err
+	}
+
+	var ok, closed bool
+	defer func() {
+		if !closed {
+			temp.Close()
+		}
+		if !ok {
+			os.Remove(temp.Name())
+		}
+	}()
+
+	err = temp.Chmod(perm)
+	if err != nil {
+		return err
+	}
+
+	_, err = temp.Write(data)
+	if err != nil {
+		return err
+	}
+
+	err = temp.Close()
+	closed = true
+	if err != nil {
+		return err
+	}
+
+	err = os.Rename(temp.Name(), path)
+	if err != nil {
+		return err
+	}
+
+	ok = true
+	return nil
 }

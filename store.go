@@ -103,7 +103,7 @@ func (store *Store) Load(coll *collection, key string, ptr any) bool {
 func (store *Store) Save(coll *collection, key string, data any) {
 	raw := encode(data)
 	fn := store.lookupPath(coll, key)
-	ensure(os.WriteFile(fn, raw, 0644)) // TODO: atomic save
+	ensure(writeFileAtomic(fn, raw, 0644))
 }
 
 func encode(v any) []byte {
