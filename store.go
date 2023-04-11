@@ -21,37 +21,15 @@ type collection struct {
 	ext       string
 }
 
-var (
-	usersColl = &collection{
-		name:      "chats",
-		singleton: true,
-		ext:       ".json",
-	}
-	chatsColl = &collection{
-		name: "chats",
-		ext:  ".json",
-	}
-
-	collections = []*collection{
-		usersColl,
-		chatsColl,
-	}
-)
-
-var subdirs = map[string]string{
-	"globals": ".json",
-	"chats":   ".json",
-}
-
-func setupStore(dataDir string, node int) *Store {
+func setupStore(path string, node int) *Store {
 	time.Sleep(2 * time.Millisecond) // ensure unique snowflake IDs
 	for _, coll := range collections {
 		if !coll.singleton {
-			ensure(os.MkdirAll(filepath.Join(dataDir, coll.name), 0755))
+			ensure(os.MkdirAll(filepath.Join(path, coll.name), 0755))
 		}
 	}
 	return &Store{
-		dataDir: dataDir,
+		dataDir: path,
 		idGen:   flake.NewGen(0, uint64(node)),
 	}
 }
@@ -82,7 +60,7 @@ func (store *Store) Exists(coll *collection, key string) bool {
 
 func (store *Store) LoadRaw(coll *collection, key string) []byte {
 	fn := store.lookupPath(coll, key)
-	log.Printf("%s : %s  ==>  %s", coll, key, fn)
+	log.Printf("%s : %s  ==>  %s", coll.name, key, fn)
 	b, err := os.ReadFile(fn)
 	if err != nil && os.IsNotExist(err) {
 		return nil

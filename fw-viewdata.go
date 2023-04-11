@@ -12,14 +12,13 @@ type ViewData struct {
 	Data   any
 
 	*SiteData
+	Route *routeInfo
+	App   *App
 
 	// Content is only populated in layouts and contains the rendered content of the page
 	Content template.HTML
 	// Head is extra HEAD content
 	Head template.HTML
-
-	CallName     string
-	FullCallName string
 }
 
 type SiteData struct {

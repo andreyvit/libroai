@@ -19,9 +19,9 @@ type User struct {
 	Gid      int
 }
 
-var root = &User{Uid: 0, Gid: 0, Username: "root"}
+var Root = &User{Uid: 0, Gid: 0, Username: "root"}
 
-func needUser(username string) *User {
+func NeedUser(username string) *User {
 	u, err := user.Lookup(username)
 	if err != nil || u == nil {
 		log.Fatalf("user %s not found: %v", username, err)
@@ -109,7 +109,7 @@ func updateKEVConfig(path string, perm os.FileMode, u *User, f func(conf *KV)) b
 	conf := KV{Lines: loadLines(path)}
 	f(&conf)
 	if conf.Modified {
-		install(path, formatLines(conf.Lines), perm, u)
+		Install(path, formatLines(conf.Lines), perm, u)
 	}
 	return conf.Modified
 }
@@ -153,7 +153,18 @@ func trimEmptyLines(lines []string) []string {
 	return lines[start:end]
 }
 
-func install(path string, content []byte, perm os.FileMode, user *User) {
+func Exists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	} else if os.IsNotExist(err) {
+		return false
+	} else {
+		panic(err)
+	}
+}
+
+func Install(path string, content []byte, perm os.FileMode, user *User) {
 	log.Printf("▸ %s", path)
 	if utf8.Valid(content) {
 		indent := strings.Repeat(" ", 12)
@@ -176,14 +187,14 @@ func subdir(parent, name string, perm os.FileMode, user *User) string {
 	return path
 }
 
-func installDir(path string, perm os.FileMode, user *User) string {
+func InstallDir(path string, perm os.FileMode, user *User) string {
 	log.Printf("▸ %s/", path)
 	ensureSkippingOSExists(os.Mkdir(path, perm))
 	ensure(os.Chown(path, user.Uid, user.Gid))
 	return path
 }
 
-func templ(templ string, data map[string]any) []byte {
+func Templ(templ string, data map[string]any) []byte {
 	t := template.New("")
 	_ = must(t.Parse(templ))
 	var buf bytes.Buffer
@@ -191,7 +202,7 @@ func templ(templ string, data map[string]any) []byte {
 	return buf.Bytes()
 }
 
-func run(name string, args ...string) {
+func Run(name string, args ...string) {
 	log.Printf("▸ %s", shellQuoteCmdline(name, args...))
 	cmd := exec.Command(name, args...)
 	output, err := cmd.CombinedOutput()

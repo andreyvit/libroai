@@ -6,14 +6,17 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/user"
 	"path/filepath"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/andreyvit/envloader"
 	"github.com/andreyvit/httpserver"
 	"github.com/andreyvit/openai"
+	"golang.org/x/exp/maps"
 
-	"github.com/andreyvit/buddyd/internal/deployment"
 	"github.com/andreyvit/buddyd/internal/director"
 	"github.com/andreyvit/buddyd/internal/gracefulshutdown"
 )
@@ -24,54 +27,99 @@ var (
 	BuildVer    string = "unknown"
 )
 
-const (
-	appName = "Buddy"
-)
+var envs = map[string][]string{
+	"local-andreyvit": {"@all", "@local", "@localdev"},
+	"local-dottedmag": {"@all", "@local", "@localdev"},
+	"stag":            {"@all", "@prodlike"},
+	"prod":            {"@all", "@prodlike"},
+	"test":            {"@all", "@local"},
+}
+
+func init() {
+	for k := range envs {
+		envs[k] = append(envs[k], k)
+	}
+}
+
+type AppSettings struct {
+	Env                string
+	LocalOverridesFile string
+	AutoEncryptSecrets bool
+	KeyringFile        string
+
+	AppName             string
+	BindAddr            string
+	BindPort            int
+	DBFile              string
+	WorkerCount         int
+	BaseURL             string
+	ServeAssetsFromDisk bool
+	CrashOnPanic        bool
+	PrettyJSON          bool
+	IsTesting           bool
+	Deployment          DeploymentSettings
+}
+
+type DeploymentSettings struct {
+	Service    string
+	User       string
+	ServiceDir string
+	DataDir    string
+}
+
+type AppSecrets struct {
+	OpenAICreds   openai.Credentials
+	Password      string
+	PasswordCaddy string
+}
 
 var (
-	openAICreds         openai.Credentials
-	baseURLStr          string
-	crashOnPanic        bool
-	serveAssetsFromDisk bool
-	isTesting           bool
+	settings AppSettings
+	secrets  AppSecrets
 )
 
 func main() {
 	log.SetOutput(os.Stderr)
-	log.SetFlags(log.Ltime)
+	log.SetFlags(0)
 
 	var (
-		env      envloader.VarSet
-		required        = envloader.Required
-		optional        = envloader.Optional
-		bindAddr string = "127.0.0.1"
-		bindPort int    = 3003
-		dataDir  string
-		appOpt   = AppOptions{}
-	)
-	env.Var("OPENAI_API_KEY", required, envloader.StringVar(&openAICreds.APIKey), "OpenAI API key")
-	env.Var("DATA_DIR", required, envloader.StringVar(&dataDir), "path to database directory")
-	env.Var("BASE_URL", required, envloader.StringVar(&baseURLStr), "base URL (ex: https://chat.tarantsov.com/)")
-	env.Var("BIND", optional, envloader.StringVar(&bindAddr), "network interface to listen on (defaults to 127.0.0.1)")
-	env.Var("PORT", optional, envloader.IntVar(&bindPort), "TCP port for HTTP server to listen on")
-
-	var (
-		envFile string
+		env        string
+		installing bool
 	)
 	flag.Usage = usage
-	flag.Var(env.PrintAction(), "print-env", "print all supported environment variables in shell format")
-	flag.Var(action(deployment.RunStdin), "install", "install (aka deploy) this binary using JSON options read from stdin")
+	flag.StringVar(&env, "e", "", fmt.Sprintf("environment to run, one of %s (defaults to local-$USER)", strings.Join(validEnvs(), ", ")))
+	flag.BoolVar(&installing, "install", false, "install (aka deploy) this binary using JSON options read from stdin")
 	flag.Var(action(func() { fmt.Println(BuildCommit) }), "version", "print version")
 	flag.Var(action(func() { fmt.Println(BuildVer) }), "print-commit", "print Git commit ID")
-	flag.StringVar(&envFile, "f", ".env", "load environment from this file")
-	flag.BoolVar(&crashOnPanic, "crash-on-panic", false, "do not recover from panics to make debugging easier")
-	flag.BoolVar(&serveAssetsFromDisk, "assets-from-disk", false, "for speed of development, load static assets from the file system and not from the data embedded into the binary (requires app files to be located at exactly the same path as when it was built, i.e. when building and running on the same machine)")
 	flag.Parse()
-	loadEnv(envFile)
-	env.Parse()
+
+	if env == "" && !installing {
+		env = "local-" + must(user.Current()).Username
+	}
+	if installing {
+		initApp(env, preinstallConfigs)
+		install()
+	} else {
+		initApp(env, nil)
+		runApp()
+	}
+}
+
+func initApp(env string, installHook func()) {
+	envGroups := envs[env]
+	if envGroups == nil {
+		log.Fatalf("** invalid environment %q, must be one of: %s", env, strings.Join(validEnvs(), ", "))
+	}
+
+	secr := loadConfig(env, &settings, installHook)
+	secr.Required("OPENAI_API_KEY", envloader.StringVar(&secrets.OpenAICreds.APIKey))
+	secr.Required("PASSWORD", envloader.StringVar(&secrets.Password))
+	secr.Required("PASSWORD_CADDY", envloader.StringVar(&secrets.PasswordCaddy))
 
 	initializeEmbeddedStatics()
+}
 
+func runApp() {
 	dir := director.New()
 	defer dir.Wait()
 
@@ -79,7 +127,7 @@ func main() {
 	defer cancel()
 	gracefulshutdown.InterceptShutdownSignals(cancel)
 
-	app := setupApp(dataDir, appOpt)
+	app := setupApp(settings.DBFile, AppOptions{})
 	defer app.Close()
 
 	ensure(dir.Start(ctx, &director.Component{
@@ -88,15 +136,15 @@ func main() {
 		RestartDelay: time.Second,
 	}, func(ctx context.Context, quitf func(err error)) error {
 		var err error
-		_, err = httpserver.Start(ctx, app.webHandler, quitf, httpserver.Options{
+		_, err = httpserver.Start(ctx, app.setupHandler(), quitf, httpserver.Options{
 			DebugName:               "http",
-			Addr:                    bindAddr,
-			Port:                    bindPort,
+			Addr:                    settings.BindAddr,
+			Port:                    settings.BindPort,
 			AcmeEnabled:             false,
 			Logf:                    log.Printf,
 			GracefulShutdownTimeout: 10 * time.Second,
 		})
-		log.Printf("%v server listening on %s port %d", appName, bindAddr, bindPort)
+		log.Printf("%v server listening on %s port %d", settings.AppName, settings.BindAddr, settings.BindPort)
 		return err
 	}))
 
@@ -111,6 +159,12 @@ func usage() {
 	flag.PrintDefaults()
 
 	fmt.Printf("\nMost options are set via environment variables. Run %s -print-env for a list.\n", base)
+}
+
+func validEnvs() []string {
+	result := maps.Keys(envs)
+	sort.Strings(result)
+	return result
 }
 
 type action func()

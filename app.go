@@ -6,7 +6,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sync/atomic"
 	"time"
+
+	"github.com/andreyvit/buddyd/internal/accesstokens"
 )
 
 type AppOptions struct {
@@ -19,12 +22,14 @@ type App struct {
 
 	Store *Store
 
-	// State        *botstate.State
-	siteData   *SiteData
-	webHandler http.Handler
-	templates  *template.Template
+	users atomic.Value
 
-	// accessTokens forevertokens.Configuration
+	routesByName map[string]*routeInfo
+	siteData     *SiteData
+	templates    *template.Template
+
+	webAdminTokens accesstokens.Configuration
+
 	// memory       *vdemir.Memory
 	httpClient *http.Client
 }
@@ -37,7 +42,7 @@ func setupApp(dataDir string, opt AppOptions) *App {
 	}
 
 	app := &App{
-		BaseURL: must(url.Parse(baseURLStr)),
+		BaseURL: must(url.Parse(settings.BaseURL)),
 		Logf:    opt.Logf,
 
 		Store: setupStore(dataDir, 1),
@@ -47,11 +52,10 @@ func setupApp(dataDir string, opt AppOptions) *App {
 		},
 	}
 
+	app.routesByName = make(map[string]*routeInfo)
 	app.siteData = &SiteData{
-		AppName: appName,
+		AppName: settings.AppName,
 	}
-
-	app.webHandler = app.setupSiteRouter(SubsiteWeb)
 	app.templates = must(app.loadTemplates())
 
 	return app

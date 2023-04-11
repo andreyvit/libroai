@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 func must[T any](v T, err error) T {
@@ -23,22 +22,6 @@ func must[T any](v T, err error) T {
 func ensure(err error) {
 	if err != nil {
 		panic(err)
-	}
-}
-
-func loadEnv(fn string) {
-	raw := string(must(os.ReadFile(fn)))
-	for _, line := range strings.Split(raw, "\n") {
-		line = strings.TrimSpace(line)
-		if len(line) == 0 || line[0] == '#' {
-			continue
-		}
-		line = strings.TrimPrefix(line, "export ")
-		k, v, ok := strings.Cut(line, "=")
-		if !ok || strings.ContainsAny(k, " ") {
-			continue
-		}
-		os.Setenv(strings.TrimSpace(k), strings.TrimSpace(v))
 	}
 }
 

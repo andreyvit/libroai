@@ -30,12 +30,12 @@ func (app *App) render(lc flogger.Context, data *ViewData) ([]byte, error) {
 	}
 
 	t := app.templates
-	if serveAssetsFromDisk {
+	if settings.ServeAssetsFromDisk {
 		flogger.Log(lc, "reloading templates from disk")
 		var err error
 		t, err = app.loadTemplates()
 		if err != nil {
-			panic(fmt.Errorf("%s: loading templates: %v", data.FullCallName, err))
+			panic(fmt.Errorf("reloading templates: %v", err))
 		}
 	}
 
@@ -70,7 +70,7 @@ type templDef struct {
 
 func (app *App) loadTemplates() (*template.Template, error) {
 	const templateSuffix = ".html"
-	viewsFS := pickStaticFS(embeddedViewsFS, "views")
+	viewsFS := pickEmbeddedFS(embeddedViewsFS, "views")
 
 	funcs := make(template.FuncMap, 100)
 	app.registerViewHelpers(funcs)

@@ -1,0 +1,64 @@
+{
+    "@all": {
+    },
+
+    "@local": {
+        "KeyringFile": ".keyring",
+    },
+
+    "@localdev": {
+        "AutoEncryptSecrets": true,
+        "DBFile": "_db/fireback.db",
+        "BindAddr": "127.0.0.1",
+        "BindPort": 3003,
+        "WorkerCount": 1,
+        "ServeAssetsFromDisk": true,
+        "CrashOnPanic": true,
+        "PrettyJSON": true,
+        "BaseURL": "http://localhost:3001/"
+    },
+
+    "local-andreyvit": {
+        "AppName": "BuddyAndrey",
+        "LocalOverridesFile": "config.local.json",
+    },
+
+    "local-dottedmag": {
+        "AppName": "BuddyMag",
+    },
+
+    "@prodlike": {
+        "WorkerCount": 2,
+    },
+
+    "stag": {
+        "AppName": "BuddyStage",
+    },
+
+    "prod": {
+        "KeyringFile": "/srv/buddyd/.keyring",
+        "LocalOverridesFile": "/srv/buddyd/buddyd.json",
+        "AppName": "Buddy",
+        "BaseURL": "https://buddy.tarantsov.com/",
+        "BindAddr": "127.0.0.1",
+        "BindPort": 3300,
+        "Deployment": {
+            "Service": "buddyd",
+            "User": "andreyvit",
+            "ServiceDir": "/srv/buddyd",
+            "DataDir": "/srv/buddyd/data",
+        },
+    },
+
+    "test": {
+        "AppName": "BuddyTest",
+        "DBFile": "<temp>",
+        "BindAddr": "127.0.0.1",
+        "BindPort": 3001,
+        "WorkerCount": 0,
+        "ServeAssetsFromDisk": false,
+        "CrashOnPanic": true,
+        "PrettyJSON": false,
+        "BaseURL": "http://localhost:3001/"
+    },
+}

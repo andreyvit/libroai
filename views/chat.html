@@ -1,0 +1,40 @@
+<div class="Container flex flex-row | h-full | bg-red">
+  <div class="Chat isolate items-stretch | order-2 flex-1 h-full">
+    <div class="HeaderBar | w-full px-6 py-3 | border-b border-black/10 bg-gray-100 text-gray-800">
+      <div class="HeaderBar__content | flex items-center justify-between | max-w-prose mx-auto text-sm md:text-base">
+        <a href="/" class="Button new-chat-button {{if .IsNewChat}}invisible{{end}} | py-1 | underline underline-offset-2 text-sky-800">New Chat</a>
+        {{if .IsNewChat}}
+        <div>New Chat</div>
+        {{else}}
+        <div title="Chat ID">{{.Chat.ID}}</div>
+        {{end}}
+        <div class="">{{.Username}}</div>
+      </div>
+    </div>
+    <div class="MessageList divide-y pb-64">
+      {{range .Chat.VRounds}}
+        {{template "chat__message" ($.Bind .User)}}
+        {{range .Assistant}}
+        {{template "chat__message" ($.Bind .)}}
+        {{end}}
+      {{end}}
+    </div>
+    <div class="BottomBar fixed bottom-0 left-0 w-full">
+      <div class="InputBar relative | max-w-prose mx-auto md:my-4 px-6 py-2 | bg-white border-t md:border border-gray-200 md:shadow md:rounded-l">
+        <form class="flex flex-row align-start {{if not .Chat.IsFinalized}}invisible{{end}}" method="POST" action="/send">
+          <input type="hidden" name="chat" value="{{.Chat.ID}}">
+          <textarea name="message" class="flex-1 text-md bg-transparent m-0 p-0 w-full resize-none border-0 bg-transparent focus:outline-0" rows="3" style="max-height: 200px; overflow-y: hidden;"></textarea>
+          <button type="submit" class="px-1 | hover:stroke-red-300 hover:stroke-2" {{if not .Chat.IsFinalized}}disabled{{end}}>
+            <svg class="w-6 md:w-7" viewBox="0 0 50 50"><path d="M 25 2 C 12.309295 2 2 12.309295 2 25 C 2 37.690705 12.309295 48 25 48 C 37.690705 48 48 37.690705 48 25 C 48 12.309295 37.690705 2 25 2 z M 25 4 C 36.609824 4 46 13.390176 46 25 C 46 36.609824 36.609824 46 25 46 C 13.390176 46 4 36.609824 4 25 C 4 13.390176 13.390176 4 25 4 z M 24.984375 10.986328 A 1.0001 1.0001 0 0 0 24.207031 11.376953 A 1.0001 1.0001 0 0 0 24.203125 11.382812 L 14.292969 21.292969 A 1.0001 1.0001 0 1 0 15.707031 22.707031 L 24 14.414062 L 24 38 A 1.0001 1.0001 0 1 0 26 38 L 26 14.414062 L 34.292969 22.707031 A 1.0001 1.0001 0 1 0 35.707031 21.292969 L 25.791016 11.376953 A 1.0001 1.0001 0 0 0 24.984375 10.986328 z" fill="currentColor"/></svg>
+          </button>
+        </form>
+      </form>
+      {{if not .Chat.IsFinalized}}
+      <div class="flex items-center justify-around | absolute top-0 left-0 w-full h-full | text-gray-500">
+        Pick the best response before sending next message.
+      </div>
+      {{end}}
+    </div>
+  </div>
+  <!-- <div class="Sidebar hidden | order-1 w-52 | bg-zinc-200"></div> -->
+</div>
