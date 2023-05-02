@@ -1,19 +1,18 @@
-package main
+package mvp
 
 import (
 	"bytes"
-	"embed"
 	"fmt"
 	"html/template"
 	"io/fs"
+	"log"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/andreyvit/buddyd/internal/flogger"
 	"github.com/andreyvit/minicomponents"
 )
-
-//go:embed views/*.html
-var embeddedViewsFS embed.FS
 
 type templKind int
 
@@ -24,19 +23,33 @@ const (
 	pageTempl
 )
 
-func (app *App) render(lc flogger.Context, data *ViewData) ([]byte, error) {
+func (app *App) EvalTemplate(templateName string, data any) (template.HTML, error) {
+	var buf strings.Builder
+	t := app.templates
+	if app.Settings.ServeAssetsFromDisk {
+		t = app.templatesDev.Load().(*template.Template)
+	}
+	err := t.ExecuteTemplate(&buf, templateName, data)
+	if err != nil {
+		return "", err
+	}
+	return template.HTML(buf.String()), nil
+}
+
+func (app *App) Render(lc flogger.Context, data *ViewData) ([]byte, error) {
 	if data.Layout == "" {
 		data.Layout = "default"
 	}
 
 	t := app.templates
-	if settings.ServeAssetsFromDisk {
+	if app.Settings.ServeAssetsFromDisk {
 		flogger.Log(lc, "reloading templates from disk")
 		var err error
 		t, err = app.loadTemplates()
 		if err != nil {
 			panic(fmt.Errorf("reloading templates: %v", err))
 		}
+		app.templatesDev.Store(t)
 	}
 
 	rdata := &RenderData{Data: data.Data, ViewData: data}
@@ -53,7 +66,7 @@ func (app *App) render(lc flogger.Context, data *ViewData) ([]byte, error) {
 	}
 
 	var buf2 bytes.Buffer
-	err = t.ExecuteTemplate(&buf2, "layout-"+data.Layout, rdata)
+	err = t.ExecuteTemplate(&buf2, "layouts/"+data.Layout, rdata)
 	if err != nil {
 		return nil, err
 	}
@@ -68,34 +81,54 @@ type templDef struct {
 	tmpl *template.Template
 }
 
+func initViews(app *App, opt *AppOptions) {
+	ge := app.Settings.Configuration
+	if app.Settings.ServeAssetsFromDisk {
+		app.staticFS = os.DirFS(filepath.Join(ge.LocalDevAppRoot, ge.StaticSubdir))
+		app.viewsFS = os.DirFS(filepath.Join(ge.LocalDevAppRoot, ge.ViewsSubdir))
+	} else {
+		app.staticFS = ge.EmbeddedStaticFS
+		app.viewsFS = ge.EmbeddedViewsFS
+	}
+
+	var err error
+	app.templates, err = app.loadTemplates()
+	if err != nil {
+		log.Fatalf("failed to load templates: %v", err)
+	}
+}
+
 func (app *App) loadTemplates() (*template.Template, error) {
 	const templateSuffix = ".html"
-	viewsFS := pickEmbeddedFS(embeddedViewsFS, "views")
 
 	funcs := make(template.FuncMap, 100)
-	app.registerViewHelpers(funcs)
+	app.registerBuiltinViewHelpers(funcs)
+	for _, f := range app.Hooks.helpers {
+		f(funcs)
+	}
 
 	root := template.New("")
 	root.Funcs(funcs)
 
 	var templs []*templDef
 
-	err := fs.WalkDir(viewsFS, ".", func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(app.viewsFS, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return fmt.Errorf("%s: %w", path, err)
 		}
 		if !strings.HasSuffix(path, templateSuffix) {
 			return nil
 		}
-		name := strings.TrimSuffix(d.Name(), templateSuffix)
-		code := string(must(fs.ReadFile(viewsFS, path)))
+		name := strings.TrimSuffix(path, templateSuffix)
+		baseName := strings.TrimSuffix(d.Name(), templateSuffix)
+		code := string(must(fs.ReadFile(app.viewsFS, path)))
 
 		var kind templKind
-		if strings.HasPrefix(name, "c-") {
-			kind = componentTempl
-		} else if strings.HasPrefix(name, "layout-") {
+		if strings.HasPrefix(path, "layouts/") {
 			kind = layoutTempl
-		} else if strings.Contains(name, "__") {
+		} else if strings.HasPrefix(baseName, "c-") {
+			kind = componentTempl
+		} else if strings.Contains(baseName, "__") {
 			kind = partialTempl
 		} else {
 			kind = pageTempl
@@ -117,9 +150,7 @@ func (app *App) loadTemplates() (*template.Template, error) {
 	comps := make(map[string]*minicomponents.ComponentDef)
 	for _, tmpl := range templs {
 		if tmpl.kind == componentTempl {
-			comps[tmpl.name] = &minicomponents.ComponentDef{
-				RenderMethod: minicomponents.RenderMethodTemplate,
-			}
+			comps[tmpl.name] = minicomponents.ScanTemplate(tmpl.code)
 		}
 	}
 	for k := range funcs {
@@ -127,7 +158,7 @@ func (app *App) loadTemplates() (*template.Template, error) {
 			name := strings.ReplaceAll(k, "_", "-")
 			comps[name] = &minicomponents.ComponentDef{
 				RenderMethod: minicomponents.RenderMethodFunc,
-				FuncName:     k,
+				ImplName:     k,
 			}
 		}
 	}

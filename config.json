@@ -2,20 +2,20 @@
     "@all": {
     },
 
-    "@local": {
+    "@localdevortest": {
         "KeyringFile": ".keyring",
     },
 
     "@localdev": {
         "AutoEncryptSecrets": true,
-        "DBFile": "_db/fireback.db",
+        "DataDir": "_data",
         "BindAddr": "127.0.0.1",
         "BindPort": 3003,
         "WorkerCount": 1,
         "ServeAssetsFromDisk": true,
         "CrashOnPanic": true,
         "PrettyJSON": true,
-        "BaseURL": "http://localhost:3001/"
+        "BaseURL": "http://localhost:3003/"
     },
 
     "local-andreyvit": {
@@ -36,23 +36,23 @@
     },
 
     "prod": {
-        "KeyringFile": "/srv/buddyd/.keyring",
-        "LocalOverridesFile": "/srv/buddyd/buddyd.json",
+        "KeyringFile": "/srv/libroai/.keyring",
+        "DataDir": "/srv/libroai/data",
+        "LocalOverridesFile": "/srv/libroai/libroai.json",
         "AppName": "Buddy",
-        "BaseURL": "https://buddy.tarantsov.com/",
+        "BaseURL": "https://libroai.com/",
         "BindAddr": "127.0.0.1",
-        "BindPort": 3300,
+        "BindPort": 4001,
         "Deployment": {
-            "Service": "buddyd",
+            "Service": "libroai",
             "User": "andreyvit",
-            "ServiceDir": "/srv/buddyd",
-            "DataDir": "/srv/buddyd/data",
+            "ServiceDir": "/srv/libroai",
         },
     },
 
     "test": {
         "AppName": "BuddyTest",
-        "DBFile": "<temp>",
+        "DataDir": "<temp>",
         "BindAddr": "127.0.0.1",
         "BindPort": 3001,
         "WorkerCount": 0,

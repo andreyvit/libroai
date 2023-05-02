@@ -1,57 +1,34 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
 	_ "embed"
-	"fmt"
-	"io"
-	"log"
 	"net/url"
 	"os"
 	"path/filepath"
 
-	d "github.com/andreyvit/buddyd/internal/deployment"
+	"github.com/andreyvit/buddyd/mvp"
+	d "github.com/andreyvit/buddyd/mvp/deploymentutil"
 )
 
-func preinstallConfigs() {
+func preinstallConfigs(baseSettings *mvp.Settings) {
+	settings := mvp.As[Settings](baseSettings)
+
+	d.InstallDir(settings.Deployment.ServiceDir, 0755, d.Root)
 	u := d.NeedUser(settings.Deployment.User)
-
-	if !d.Exists(settings.KeyringFile) {
-		ensure(os.MkdirAll(filepath.Dir(settings.KeyringFile), 0755))
-		log.Printf("Keyring file does not exist on the server: %s", settings.KeyringFile)
-		log.Printf("Assuming you're initializing a new environment.")
-		log.Printf("Paste a keyring file, end with an empty line:")
-
-		var keyringText bytes.Buffer
-		for reader := bufio.NewReader(os.Stdin); ; {
-			fmt.Fprintf(os.Stderr, "> ")
-			line, err := reader.ReadBytes('\n')
-			if len(line) > 0 {
-				keyringText.Write(line)
-			}
-			if err == io.EOF || len(bytes.TrimSpace(line)) == 0 {
-				break
-			}
-			ensure(err)
-		}
-		d.Install(settings.KeyringFile, keyringText.Bytes(), 0600, u)
-	}
-
-	if !d.Exists(settings.LocalOverridesFile) {
-		ensure(os.MkdirAll(filepath.Dir(settings.LocalOverridesFile), 0755))
-		d.Install(settings.LocalOverridesFile, []byte("{}"), 0644, d.Root)
-	}
+	d.InstallIfNotExistsFromStdin(settings.KeyringFile, "Keyring file does not exist on the server: {{.path}}.\nAssuming you're initializing a new environment.\nPaste a keyring file, end with an empty line:", 0600, u)
+	d.InstallIfNotExistsFromString(settings.LocalOverridesFile, "{}", 0644, d.Root)
 }
 
-func install() {
+func install(baseSettings *mvp.Settings) {
+	settings := mvp.As[Settings](baseSettings)
+
 	u := d.NeedUser(settings.Deployment.User)
 	serv := settings.Deployment.Service
 	mainService := serv + ".service"
 
 	servDir := d.InstallDir(settings.Deployment.ServiceDir, 0755, d.Root)
 	binDir := d.InstallDir(filepath.Join(servDir, "bin"), 0755, d.Root)
-	dataDir := d.InstallDir(settings.Deployment.DataDir, 0755, u)
+	dataDir := d.InstallDir(settings.DataDir, 0755, u)
 
 	mainFile := filepath.Join(binDir, serv)
 
@@ -65,8 +42,8 @@ func install() {
 		"mainFile": mainFile,
 		"servDir":  settings.Deployment.ServiceDir,
 		"dataDir":  dataDir,
-		"password": secrets.PasswordCaddy,
-		"env":      settings.Env,
+		// "password": secrets.PasswordCaddy,
+		"env": settings.Env,
 	}
 
 	d.Install(mainFile, must(os.ReadFile(must(os.Executable()))), 0755, d.Root)
@@ -79,11 +56,11 @@ func install() {
 	d.Run("/srv/caddy/bin/caddy", "reload", "--config", "/etc/Caddyfile")
 }
 
+//	basicauth {
+//	    tester {{.password}}
+//	}
 const caddyfile = `
 {{.host}} {
-    basicauth {
-        tester {{.password}}
-    }
     reverse_proxy :{{.port}}
 }
 `

@@ -1,4 +1,4 @@
-package gracefulshutdown
+package mvp
 
 import (
 	"context"
@@ -33,5 +33,5 @@ func GracefulShutdown(gracePeriod time.Duration, graceful func(ctx context.Conte
 		log.Println("WARNING: graceful shutdown timed out")
 	} else if err != nil {
 		log.Fatalf("** ERROR: graceful shutdown failed: %v", err)
-	}	
+	}
 }

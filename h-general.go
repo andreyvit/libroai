@@ -1,7 +1,9 @@
 package main
 
-func (app *App) showTestPage(rc *RC, in *struct{}) (*ViewData, error) {
-	return &ViewData{
+import "github.com/andreyvit/buddyd/mvp"
+
+func (app *App) showTestPage(rc *mvp.RC, in *struct{}) (*mvp.ViewData, error) {
+	return &mvp.ViewData{
 		View:  "test",
 		Title: "Test Page",
 		Data:  struct{}{},

@@ -1,4 +1,4 @@
-package main
+package mvp
 
 import (
 	"bytes"
@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/andreyvit/edb"
 	"github.com/uptrace/bunrouter"
 )
 
@@ -42,53 +43,79 @@ import (
 // so RC needs to carry input/output cookies AND any resulting flash data.
 //
 // As such, this type is meant to be customized for a particular application.
-// All the 'framework' code (fw-*.go) needs to access RC and pass it through,
-// which makes it impossible to extract the framework into a reusable module.
-// (I suppose everything could be littered with generics on RC, but nobody wants
-// to go there.) I'd really love to extract the framework one day, so ideas
-// are very welcome here. It could be an interface, yes, but the way things stand,
-// that'd be one hell of an ugly interface.
 type RC struct {
-	Ctx context.Context
-	// Auth      bm.Auth
+	tx *edb.Tx
+
+	parent context.Context
+	values []any
+	app    *App
+
 	RequestID string
 	Start     time.Time // ACTUAL time of request start
 	Now       time.Time // wall clock time of request start
 	logf      func(format string, args ...any)
 
-	Route      *routeInfo
+	Route      *Route
 	Request    bunrouter.Request
 	RespWriter http.ResponseWriter
 
 	SetCookies []*http.Cookie
 }
 
-func (app *App) NewRC(ctx context.Context, requestID string) *RC {
+func NewRC(ctx context.Context, app *App, requestID string) *RC {
 	if requestID == "" {
-		requestID = randomHex(32)
+		requestID = RandomHex(32)
 	}
-	return &RC{
-		Ctx:       ctx,
+	rc := &RC{
+		parent:    ctx,
+		values:    newValueSet(),
+		app:       app,
 		RequestID: requestID,
 		Start:     time.Now(),
 		Now:       time.Now(),
-		logf:      app.Logf,
 	}
+	runHooksFwd2(app.Hooks.initRC, app, rc)
+	return rc
 }
 
-func (app *App) NewHTTPRequestRC(w http.ResponseWriter, r bunrouter.Request) *RC {
-	rc := app.NewRC(r.Context(), r.Header.Get("X-Request-ID"))
+func NewHTTPRC(app *App, w http.ResponseWriter, r bunrouter.Request) *RC {
+	rc := NewRC(r.Context(), app, r.Header.Get("X-Request-ID"))
 	rc.Request = r
 	rc.RespWriter = w
 	return rc
 }
 
-func (rc *RC) Context() context.Context {
-	return rc.Ctx
+func (rc *RC) BaseApp() *App {
+	return rc.app
 }
 
 func (rc *RC) Logf(format string, args ...any) {
-	rc.logf(format, args...)
+	rc.app.logf(format, args...)
+}
+
+func (rc *RC) Close() {
+	runHooksRev2(rc.app.Hooks.closeRC, rc.app, rc)
+	// TODO: return allocated values to the pool
+}
+
+func (app *App) NewHTTPRequestRC(w http.ResponseWriter, r bunrouter.Request) *RC {
+	rc := NewRC(r.Context(), app, r.Header.Get("X-Request-ID"))
+	rc.Request = r
+	rc.RespWriter = w
+	return rc
+}
+
+func (rc *RC) Deadline() (deadline time.Time, ok bool) {
+	return rc.parent.Deadline()
+}
+func (rc *RC) Done() <-chan struct{} {
+	return rc.parent.Done()
+}
+func (rc *RC) Err() error {
+	return rc.parent.Err()
+}
+func (rc *RC) Value(key any) any {
+	return rc.parent.Value(key)
 }
 
 func (rc *RC) SetCookie(cookie *http.Cookie) {
@@ -99,14 +126,4 @@ func (rc *RC) AppendLogPrefix(buf *bytes.Buffer) {
 	fmt.Fprintf(buf, "[%s] ", rc.RequestID)
 }
 func (rc *RC) AppendLogSuffix(buf *bytes.Buffer) {
-}
-
-// func (rc *RC) Commit() error {
-// 	if rc.Tx == nil || !rc.Tx.IsWritable() {
-// 		return nil
-// 	}
-// 	return rc.Tx.Commit()
-// }
-
-func (rc *RC) Close() {
 }

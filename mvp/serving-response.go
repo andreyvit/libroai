@@ -1,4 +1,4 @@
-package main
+package mvp
 
 import (
 	"fmt"
@@ -23,23 +23,24 @@ type DebugOutput string
 
 type ResponseHandled struct{}
 
-func (app *App) writeResponse(rc *RC, output any, route *routeInfo, w http.ResponseWriter, r *http.Request) error {
+func (app *App) writeResponse(rc *RC, output any, route *Route, w http.ResponseWriter, r *http.Request) error {
 	for _, cookie := range rc.SetCookies {
 		http.SetCookie(w, cookie)
 	}
 	switch output := output.(type) {
 	case *ViewData:
 		if output.View == "" {
-			output.View = strings.ReplaceAll(route.RouteName, ".", "-")
+			output.View = strings.ReplaceAll(route.routeName, ".", "-")
 		}
 		output.Route = route
-		output.SiteData = app.siteData
-		b, err := app.render(rc, output)
+		// output.SiteData = app.siteData
+		output.App = app
+		b, err := app.Render(rc, output)
 		if err != nil {
 			return err
 		}
 		w.Write(b)
-	case Redirect:
+	case *Redirect:
 		path := output.Path
 		if len(output.Values) > 0 {
 			path = path + "?" + output.Values.Encode()
@@ -54,7 +55,7 @@ func (app *App) writeResponse(rc *RC, output any, route *routeInfo, w http.Respo
 	case ResponseHandled:
 		break
 	default:
-		panic(fmt.Errorf("%s: invalid return value %T %v", route.FullName, output, output))
+		panic(fmt.Errorf("%s: invalid return value %T %v", route.desc, output, output))
 	}
 	return nil
 }

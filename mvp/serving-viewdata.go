@@ -1,4 +1,4 @@
-package main
+package mvp
 
 import (
 	"fmt"
@@ -12,13 +12,18 @@ type ViewData struct {
 	Data   any
 
 	*SiteData
-	Route *routeInfo
+	Route *Route
 	App   *App
 
 	// Content is only populated in layouts and contains the rendered content of the page
 	Content template.HTML
 	// Head is extra HEAD content
 	Head template.HTML
+}
+
+func (vd *ViewData) DefaultPathParams() map[string]string {
+	defaults := make(map[string]string)
+	return defaults
 }
 
 type SiteData struct {
@@ -44,6 +49,9 @@ func (d *RenderData) Bind(value any, args ...any) *RenderData {
 		} else {
 			panic(fmt.Errorf("argument %d must be a string, got %T: %v", i, key, key))
 		}
+	}
+	if len(m) == 0 {
+		m["__dummy"] = true
 	}
 	return &RenderData{
 		Data:     value,
