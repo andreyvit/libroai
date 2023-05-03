@@ -25,6 +25,7 @@ type AppBehaviors struct {
 	ServeAssetsFromDisk bool
 	CrashOnPanic        bool
 	PrettyJSON          bool
+	DisableRateLimits   bool
 }
 
 type App struct {
@@ -48,6 +49,10 @@ type App struct {
 	db *edb.DB
 
 	postmrk *postmark.Caller
+
+	rateLimiters map[RateLimitPreset]map[RateLimitGranularity]*RateLimiter
+
+	// rateLimiters map[string]
 }
 
 func (app *App) Initialize(settings *Settings, opt AppOptions) {
@@ -76,6 +81,7 @@ func (app *App) Initialize(settings *Settings, opt AppOptions) {
 
 	initAppDB(app, &opt)
 	initViews(app, &opt)
+	initRateLimiting(app)
 	initRouting(app)
 	runHooksFwd1(app.Hooks.initApp, app)
 }

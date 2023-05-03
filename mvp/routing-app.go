@@ -55,6 +55,9 @@ func initRouting(app *App) {
 // Note: we might be doing too much here, some logic should probably be moved into middleware.
 func (app *App) callRoute(route *Route, rc *RC, w http.ResponseWriter, req bunrouter.Request) error {
 	rc.Route = route
+	if rc.RateLimitPreset == "" {
+		rc.RateLimitPreset = route.rateLimitPreset
+	}
 
 	if !route.idempotent {
 		// TODO: check CSRF

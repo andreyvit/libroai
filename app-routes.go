@@ -8,4 +8,6 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 	b.Route("landing.signup", "POST /start", app.handleLandingSignup)
 	b.Route("landing.waitlist", "GET /waitlist/", app.showWaitlist)
 	b.Route("test", "GET /test/", app.showTestPage)
+	b.Route("signin", "GET /signin/", app.showSignIn)
+	b.Route("signin.process", "POST /signin/", app.handleSignIn, mvp.RateLimitPresetSpam)
 }

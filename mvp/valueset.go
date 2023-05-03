@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-type Type struct {
+type ExpandableType struct {
 	StoredValues []AnyVal
 }
 

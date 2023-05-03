@@ -6,17 +6,20 @@ type Router interface {
 	Use(middleware any)
 	UseIn(slot string, middleware any)
 	OnError(f ErrHandler)
+	RateLimit(preset RateLimitPreset)
 }
 
 type routingContext struct {
-	middleware  middlewareSlotList
-	errHandlers []func(rc *RC, err error) (any, error)
+	middleware      middlewareSlotList
+	errHandlers     []func(rc *RC, err error) (any, error)
+	rateLimitPreset RateLimitPreset
 }
 
 func (c *routingContext) clone() routingContext {
 	return routingContext{
-		middleware:  c.middleware.Clone(),
-		errHandlers: append([]ErrHandler(nil), c.errHandlers...),
+		middleware:      c.middleware.Clone(),
+		errHandlers:     append([]ErrHandler(nil), c.errHandlers...),
+		rateLimitPreset: c.rateLimitPreset,
 	}
 }
 
@@ -35,4 +38,7 @@ func (c *routingContext) UseIn(slot string, middleware any) {
 }
 func (c *routingContext) OnError(f ErrHandler) {
 	c.errHandlers = append(c.errHandlers, f)
+}
+func (c *routingContext) RateLimit(preset RateLimitPreset) {
+	c.rateLimitPreset = preset
 }

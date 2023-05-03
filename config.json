@@ -1,5 +1,31 @@
 {
     "@all": {
+        "RateLimits": {
+            "web.r": {
+                "app": {"PerSec": 10, "Burst": 10},
+                "ip": {"PerSec": 10, "Burst": 10},
+            },
+            "web.w": {
+                "app": {"PerSec": 10, "Burst": 10},
+                "ip": {"PerSec": 10, "Burst": 10},
+            },
+            "spam": {
+                "app": {"PerSec": 1, "Burst": 3},
+                "ip": {"PerSec": 0.2, "Burst": 2},
+            },
+            "auth": {
+                "app": {"PerSec": 1, "Burst": 3},
+                "ip": {"PerSec": 0.2, "Burst": 3},
+            },
+            "danger": {
+                "app": {"PerSec": 1, "Burst": 3},
+                "ip": {"PerSec": 0.2, "Burst": 2},
+            },
+        },
+        "MaxRateLimitRequestDelay": "5s",
+
+        "EmailDefaultFrom": "libroai@tarantsov.com",
+        "PostmarkDefaultMessageStream": "outbound",
     },
 
     "@localdevortest": {

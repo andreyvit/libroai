@@ -37,7 +37,7 @@ func (g *RouteBuilder) Static(path string) {
 	setupStaticServer(g.bg, path, g.app.staticFS)
 }
 
-type RouteOption func(route *Route)
+type RouteOption = any
 
 // Route defines a named route. methodAndPath are space-separated.
 //
@@ -84,12 +84,17 @@ func (g *RouteBuilder) Route(routeName string, methodAndPath string, f any, opti
 		route.pathParams = append(route.pathParams, param[1:])
 	}
 
-	for _, f := range options {
-		f(route)
+	for _, opt := range options {
+		switch opt := opt.(type) {
+		case RateLimitPreset:
+			route.rateLimitPreset = opt
+		default:
+			panic(fmt.Errorf("%s: invalid option %T %v", desc, opt, opt))
+		}
 	}
 
 	if prev := g.app.routesByName[route.routeName]; prev != nil {
-		panic(fmt.Errorf("route %s: duplicate path %s, previous was %s", route.RouteName, methodAndPath, prev.method+" "+prev.path))
+		panic(fmt.Errorf("route %s: duplicate path %s, previous was %s", route.routeName, methodAndPath, prev.method+" "+prev.path))
 	}
 	g.app.routesByName[route.routeName] = route
 

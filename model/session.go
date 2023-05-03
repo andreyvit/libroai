@@ -13,3 +13,9 @@ type Session struct {
 	RefreshTime  time.Time `msgpack:"tmr"`
 	ActivityTime time.Time `msgpack:"tma"`
 }
+
+type UserSignInAttempt struct {
+	Email string    `msgpack:"-"`
+	Code  string    `msgpack:"c"`
+	Time  time.Time `msgpack:"tm"`
+}

@@ -5,6 +5,16 @@ import (
 	"net/http"
 )
 
+const (
+	MwSlotRateLimitAdjustment = "ratelimitconf"
+	MwSlotRateLimiter         = "ratelimit"
+)
+
+func (app *App) addBuiltinMiddleware(b *RouteBuilder) {
+	b.UseIn(MwSlotRateLimitAdjustment, nil)
+	b.UseIn(MwSlotRateLimiter, app.enforceRateLimit)
+}
+
 type middlewareFunc = func(rc *RC) (any, error)
 
 type middlewareSlot struct {

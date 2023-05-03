@@ -2,7 +2,6 @@ package mvp
 
 import (
 	"fmt"
-	"log"
 	"net/url"
 	"strings"
 )
@@ -22,33 +21,57 @@ func (app *App) URL(name string, extras ...any) string {
 		panic(fmt.Errorf("route %s does not exist", name))
 	}
 
-	var keys map[string]string
-	var params url.Values
-	var abs bool
+	var g URLGen
 	for i := 0; i < len(extras); i++ {
 		switch extra := extras[i].(type) {
 		case map[string]string:
-			if keys == nil {
-				keys = extra
+			if g.PathKeys == nil {
+				g.PathKeys = extra
 			} else {
 				for k, v := range extra {
-					keys[k] = v
+					g.PathKeys[k] = v
 				}
 			}
 		case url.Values:
-			params = extra
+			if g.QueryParams == nil {
+				g.QueryParams = extra
+			} else {
+				for k, vv := range extra {
+					g.QueryParams[k] = vv
+				}
+			}
 		case string:
-			if i+1 >= len(extras) {
-				panic(fmt.Errorf("route %s: no value following extra key %q", name, extra))
+			if strings.HasPrefix(extra, "#") {
+				switch extra {
+				case "#abs":
+					g.Absolute = true
+				default:
+					if !runHooksFwd3Or(app.Hooks.urlGenOption, app, &g, extra) {
+						panic(fmt.Errorf("route %s: invalid option %q", name, extra))
+					}
+				}
+			} else if s, ok := strings.CutPrefix(extra, "?"); ok {
+				if i+1 >= len(extras) {
+					panic(fmt.Errorf("route %s: no value following query param %q", name, extra))
+				}
+				i++
+				if g.QueryParams == nil {
+					g.QueryParams = make(url.Values)
+				}
+				g.QueryParams.Set(s, fmt.Sprint(extras[i]))
+			} else {
+				if i+1 >= len(extras) {
+					panic(fmt.Errorf("route %s: no value following extra key %q", name, extra))
+				}
+				i++
+				if g.PathKeys == nil {
+					g.PathKeys = make(map[string]string)
+				}
+				g.PathKeys[extra] = fmt.Sprint(extras[i])
 			}
-			if keys == nil {
-				keys = make(map[string]string)
-			}
-			keys[extra] = fmt.Sprint(extras[i+1])
-			i++
 		case URLGenOption:
 			if extra == Absolute {
-				abs = true
+				g.Absolute = true
 			}
 		default:
 			panic(fmt.Errorf("route %s: unsupported extra %T %v", name, extra, extra))
@@ -56,26 +79,36 @@ func (app *App) URL(name string, extras ...any) string {
 	}
 
 	path := route.path
-	if keys != nil {
-		for k, v := range keys {
+	if g.PathKeys != nil {
+		for k, v := range g.PathKeys {
 			path = strings.ReplaceAll(path, ":"+k, v)
 		}
 	}
+
+	if g.Absolute {
+		g.URL = *app.BaseURL
+	}
+	g.Path = path
+	if g.QueryParams != nil {
+		g.RawQuery = g.QueryParams.Encode()
+	}
+
+	runHooksFwd2(app.Hooks.urlGen, app, &g)
+
 	if strings.Contains(path, ":") {
 		panic(fmt.Errorf("route %s: not all path params specified in %q", name, path))
 	}
 
-	var p url.URL
-	if abs {
-		p = *app.BaseURL
-	}
-	p.Path = path
-	if params != nil {
-		p.RawQuery = params.Encode()
-	}
+	// log.Printf("URL(%s, %v) = %s", name, extras, g.URL.String())
+	return g.URL.String()
+}
 
-	log.Printf("URL(%s, %v) = %s", name, extras, p.String())
-	return p.String()
+type URLGen struct {
+	url.URL
+	Absolute    bool
+	Options     []string
+	PathKeys    map[string]string
+	QueryParams url.Values
 }
 
 // Redirect returns a response object that redirects to a given route.

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/andreyvit/buddyd/internal/postmark"
+	"github.com/andreyvit/buddyd/mvp/jsonext"
 	"github.com/andreyvit/edb"
 	"github.com/andreyvit/jsonfix"
 	"github.com/andreyvit/plainsecrets"
@@ -39,13 +40,15 @@ type Configuration struct {
 	ViewsSubdir     string
 	LocalDevAppRoot string
 
-	NewSettings func() *Settings
+	NewSettings  func() *Settings
 	FullSettings func(*Settings) any
-	NewApp      func() *App
-	NewRC       func() *RC
-	LoadSecrets func(*Settings, Secrets)
+	NewApp       func() *App
+	NewRC        func() *RC
+	LoadSecrets  func(*Settings, Secrets)
 
 	Schema *edb.Schema
+
+	AuthTokenCookieName string
 }
 
 func (ge *Configuration) ValidEnvs() []string {
@@ -71,13 +74,18 @@ type Settings struct {
 	WorkerCount int
 
 	// app options
-	AppName string
-	BaseURL string
+	AppName                  string
+	BaseURL                  string
+	RateLimits               map[RateLimitPreset]map[RateLimitGranularity]RateLimitSettings
+	MaxRateLimitRequestDelay jsonext.Duration
 	AppBehaviors
 
 	DataDir string
 
-	Postmark postmark.Credentials
+	Postmark                     postmark.Credentials
+	PostmarkDefaultMessageStream string
+	EmailDefaultFrom             string
+	EmailDefaultLayout           string
 }
 
 type Secrets map[string]string

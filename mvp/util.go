@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"unsafe"
 )
 
@@ -42,6 +43,24 @@ func RandomBytes(len int) []byte {
 func RandomHex(len int) string {
 	b := RandomBytes((len + 1) / 2)
 	return hex.EncodeToString(b)[:len]
+}
+
+func RandomAlpha(n int) string {
+	const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // 32 characters
+	raw := RandomBytes(n)
+	for i, b := range raw {
+		raw[i] = alphabet[int(b)%len(alphabet)]
+	}
+	return string(raw)
+}
+
+func RandomDigits(n int) string {
+	const alphabet = "0123456789"
+	raw := RandomBytes(n)
+	for i, b := range raw {
+		raw[i] = alphabet[int(b)%len(alphabet)]
+	}
+	return string(raw)
 }
 
 func WriteFileAtomic(path string, data []byte, perm fs.FileMode) (err error) {
@@ -120,4 +139,28 @@ func (f action) Set(string) error {
 	f()
 	os.Exit(0)
 	return nil
+}
+
+// EmailRateLimitingKey is a slightly paranoid function that maps emails into string keys to use for rate limiting.
+func EmailRateLimitingKey(email string) string {
+	username, host, found := strings.Cut(email, "@")
+	if !found {
+		return "invalid" // use single key for all invalid emails to cut down on stupid shenanigans
+	}
+	// get rid of local part (after +)
+	username, _, _ = strings.Cut(username, "+")
+	username = strings.Map(keepOnlyLettersAndNumbers, username)
+	email = username + "@" + host
+	email = strings.ToLower(email)
+	return email
+}
+
+var lettersAndNumbers = [128]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0}
+
+func keepOnlyLettersAndNumbers(r rune) rune {
+	if r < 128 && lettersAndNumbers[r] != 0 {
+		return r
+	} else {
+		return -1
+	}
 }

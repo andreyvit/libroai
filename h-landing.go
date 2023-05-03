@@ -30,24 +30,19 @@ func (app *App) handleLandingSignup(rc *mvp.RC, in *struct {
 	CompanyName string `json:"organization"`
 	FullName    string `json:"name"`
 }) (*mvp.Redirect, error) {
-	body := string(must(app.Render(rc, &mvp.ViewData{
-		View:   "emails/signup",
-		Layout: "none",
+	app.SendEmail(rc, &mvp.Email{
+		From:    "libroai@tarantsov.com",
+		To:      "andrey@tarantsov.com",
+		ReplyTo: in.Email,
+		Subject: fmt.Sprintf("[LibroAI Signup] %s from %s", in.FullName, in.CompanyName),
+		View:    "emails/signup",
 		Data: map[string]any{
 			"Email":       in.Email,
 			"CompanyName": in.CompanyName,
 			"FullName":    in.FullName,
 			"Now":         time.Now().UTC().Format("2006-01-02 15:04"),
 		},
-	})))
-
-	app.SendEmail(rc, &mvp.Email{
-		From:          "libroai@tarantsov.com",
-		To:            "andrey@tarantsov.com",
-		ReplyTo:       in.Email,
-		Subject:       fmt.Sprintf("[LibroAI Signup] %s from %s", in.FullName, in.CompanyName),
-		HtmlBody:      body,
-		MessageStream: "outbound",
+		Category: "signupform",
 	})
 
 	return app.Redirect(0, "landing.waitlist"), nil

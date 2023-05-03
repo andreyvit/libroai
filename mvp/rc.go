@@ -60,6 +60,9 @@ type RC struct {
 	RespWriter http.ResponseWriter
 
 	SetCookies []*http.Cookie
+
+	RateLimitPreset RateLimitPreset
+	RateLimitKey    string
 }
 
 func NewRC(ctx context.Context, app *App, requestID string) *RC {
@@ -87,6 +90,13 @@ func NewHTTPRC(app *App, w http.ResponseWriter, r bunrouter.Request) *RC {
 
 func (rc *RC) BaseApp() *App {
 	return rc.app
+}
+
+func (rc *RC) DBTx() *edb.Tx {
+	if rc.tx == nil {
+		panic("rc does not have tx open")
+	}
+	return rc.tx
 }
 
 func (rc *RC) Logf(format string, args ...any) {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/andreyvit/envloader"
 	"github.com/andreyvit/openai"
+	"golang.org/x/time/rate"
 
 	"github.com/andreyvit/buddyd/internal/accesstokens"
 	"github.com/andreyvit/buddyd/mvp"
@@ -75,9 +76,10 @@ type DeploymentSettings struct {
 
 type App struct {
 	mvp.App
-	users          atomic.Value
-	webAdminTokens accesstokens.Configuration
-	httpClient     *http.Client
+	users                atomic.Value
+	webAdminTokens       accesstokens.Configuration
+	httpClient           *http.Client
+	dangerousRateLimiter *rate.Limiter
 }
 
 type RC struct {
@@ -106,6 +108,7 @@ func newApp() *mvp.App {
 		httpClient: &http.Client{
 			Timeout: 2 * time.Minute,
 		},
+		dangerousRateLimiter: rate.NewLimiter(rate.Every(time.Second*5), 5),
 	}
 
 	app.Hooks.SiteRoutes(mvp.DefaultSite, app.registerRoutes)
