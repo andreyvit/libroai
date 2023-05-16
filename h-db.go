@@ -25,15 +25,15 @@ type ListResult1 struct {
 func (app *App) listSuperadminTables(rc *mvp.RC, in *struct {
 }) (*mvp.ViewData, error) {
 	return &mvp.ViewData{
-		View:  "db/tables",
-		Title: "DB Tables",
+		View:         "db/tables",
+		Title:        "DB Tables",
+		SemanticPath: "superadmin/db",
 		Data: &struct {
 			Tables []*edb.Table
 		}{
 			Tables: schema.Tables(),
 		},
-		Layout:       "default",
-		SemanticPath: "db",
+		Layout: "default",
 	}, nil
 }
 
@@ -66,8 +66,9 @@ func (app *App) listSuperadminTableRows(rc *mvp.RC, in *struct {
 		res.Objects = append(res.Objects, buildObject1(row, rowMeta))
 	}
 	return &mvp.ViewData{
-		View:  "db/rows",
-		Title: tbl.Name(),
+		View:         "db/rows",
+		Title:        tbl.Name(),
+		SemanticPath: "superadmin/db/table",
 		Data: &struct {
 			Table *edb.Table
 			Rows  []*adminDBTableRow
@@ -75,8 +76,7 @@ func (app *App) listSuperadminTableRows(rc *mvp.RC, in *struct {
 			Table: tbl,
 			Rows:  rows,
 		},
-		Layout:       "default",
-		SemanticPath: "db/table",
+		Layout: "default",
 	}, nil
 }
 
@@ -167,8 +167,9 @@ render:
 	data := string(must(json.MarshalIndent(row, "", "  ")))
 
 	return &mvp.ViewData{
-		View:  "db/row",
-		Title: fmt.Sprintf("%s / %s", tbl.Name(), keyStr),
+		View:         "db/row",
+		Title:        fmt.Sprintf("%s / %s", tbl.Name(), keyStr),
+		SemanticPath: "superadmin/db/table/row",
 		Data: &struct {
 			Errors   []string
 			Table    *edb.Table
@@ -182,8 +183,7 @@ render:
 			ModCount: rowMeta.ModCount,
 			Data:     data,
 		},
-		Layout:       "default",
-		SemanticPath: "db/table",
+		Layout: "default",
 	}, nil
 }
 

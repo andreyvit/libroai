@@ -11,25 +11,9 @@ func (app *App) showChatHome(rc *mvp.RC, in *struct{}) (*mvp.ViewData, error) {
 	users := edb.All(edb.TableScan[m.User](rc, edb.FullScan()))
 
 	return &mvp.ViewData{
-		View:  "superadmin/home",
-		Title: "Superadmin",
-		Data: struct {
-			Waitlisters []*m.Waitlister
-			Users       []*m.User
-		}{
-			Waitlisters: wls,
-			Users:       users,
-		},
-	}, nil
-}
-
-func (app *App) showPickAccountForm(rc *mvp.RC, in *struct{}) (*mvp.ViewData, error) {
-	wls := edb.All(edb.TableScan[m.Waitlister](rc, edb.FullScan()))
-	users := edb.All(edb.TableScan[m.User](rc, edb.FullScan()))
-
-	return &mvp.ViewData{
-		View:  "superadmin/home",
-		Title: "Superadmin",
+		View:         "superadmin/home",
+		Title:        "Chat",
+		SemanticPath: "chat",
 		Data: struct {
 			Waitlisters []*m.Waitlister
 			Users       []*m.User

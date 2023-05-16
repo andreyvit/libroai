@@ -35,6 +35,7 @@ func (app *App) writeResponse(rc *RC, output any, route *Route, w http.ResponseW
 		output.Route = route
 		// output.SiteData = app.siteData
 		output.App = app
+		output.RC = rc
 		b, err := app.Render(rc, output)
 		if err != nil {
 			return err

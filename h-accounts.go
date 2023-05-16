@@ -198,3 +198,27 @@ func (app *App) startSession(rc *mvp.RC, actor m.Actor) {
 		ActorRef:  sess.Actor,
 	})
 }
+
+func (app *App) showPickAccountForm(rc *mvp.RC, in *struct{}) (*mvp.ViewData, error) {
+	wls := edb.All(edb.TableScan[m.Waitlister](rc, edb.FullScan()))
+	users := edb.All(edb.TableScan[m.User](rc, edb.FullScan()))
+
+	return &mvp.ViewData{
+		View:  "superadmin/home",
+		Title: "Superadmin",
+		Data: struct {
+			Waitlisters []*m.Waitlister
+			Users       []*m.User
+		}{
+			Waitlisters: wls,
+			Users:       users,
+		},
+	}, nil
+}
+
+func (app *App) handleSignOut(rc *mvp.RC, in *struct{}) (any, error) {
+	rc.DeleteAuthCookie()
+	return &mvp.Redirect{
+		Path: app.URL("signin"),
+	}, nil
+}

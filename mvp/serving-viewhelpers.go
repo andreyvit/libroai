@@ -5,8 +5,6 @@ import (
 	"html/template"
 	"io/fs"
 	"strings"
-
-	"golang.org/x/exp/slices"
 )
 
 func (app *App) registerBuiltinViewHelpers(m template.FuncMap) {
@@ -57,6 +55,7 @@ func (app *App) registerBuiltinViewHelpers(m template.FuncMap) {
 		}
 		return nil
 	}
+	m["classes"] = JoinClasses
 }
 
 func (app *App) renderLink(data *RenderData) template.HTML {
@@ -66,7 +65,8 @@ func (app *App) renderLink(data *RenderData) template.HTML {
 	routeName, _ := data.PopString("route")
 	bodyAttr, _ := data.PopString("body")
 	classAttr, _ := data.PopString("class")
-	activeClassAttr, _ := data.PopString("active-class")
+	inactiveClassAttr, _ := data.PopString("inactive_class")
+	activeClassAttr, _ := data.PopString("active_class")
 	if activeClassAttr == "" {
 		activeClassAttr = "active"
 	}
@@ -111,18 +111,10 @@ func (app *App) renderLink(data *RenderData) template.HTML {
 
 	classes = append(classes, strings.Fields(classAttr)...)
 
-	if looksActive && activeClassAttr != "" {
-		for _, c := range strings.Fields(activeClassAttr) {
-			if s, ok := strings.CutPrefix(c, "remove:"); ok {
-				if i := slices.Index(classes, s); i >= 0 {
-					classes = slices.Delete(classes, i, i+1)
-				}
-			} else {
-				if i := slices.Index(classes, s); i < 0 {
-					classes = append(classes, c)
-				}
-			}
-		}
+	if looksActive {
+		classes = AddClasses(classes, activeClassAttr)
+	} else {
+		classes = AddClasses(classes, inactiveClassAttr)
 	}
 
 	var extraArgs strings.Builder
@@ -134,7 +126,7 @@ func (app *App) renderLink(data *RenderData) template.HTML {
 		}
 	}
 	if len(classes) > 0 {
-		extraArgs.WriteString(string(Attr("class", strings.Join(classes, " "))))
+		extraArgs.WriteString(string(Attr("class", JoinClassList(classes))))
 	}
 
 	if isActive || href == "" {

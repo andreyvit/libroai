@@ -12,6 +12,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/exp/slices"
 )
 
 func must[T any](v T, err error) T {
@@ -187,4 +189,60 @@ func keepOnlyLettersAndNumbers(r rune) rune {
 
 func isWhitespaceOrComma(r rune) bool {
 	return r == ' ' || r == ','
+}
+
+func JoinClasses(items ...any) string {
+	var classes []string
+	for _, item := range items {
+		switch item := item.(type) {
+		case []string:
+			if classes == nil {
+				classes = item
+			} else {
+				classes = AddClassList(classes, item)
+			}
+		case string:
+			classes = AddClasses(classes, item)
+		default:
+			panic(fmt.Errorf("JoinClasses: invalid item %T %v", item, item))
+		}
+	}
+	return JoinClassList(classes)
+}
+
+func JoinClassList(classes []string) string {
+	return strings.Join(classes, " ")
+}
+
+func AddClasses(classes []string, items string) []string {
+	if len(items) == 0 {
+		return classes
+	}
+	return AddClassList(classes, strings.Fields(items))
+}
+
+func AddClassList(classes []string, items []string) []string {
+	if len(items) == 0 {
+		return classes
+	}
+	for _, c := range items {
+		classes = AddSingleClass(classes, c)
+	}
+	return classes
+}
+
+func AddSingleClass(classes []string, item string) []string {
+	if len(item) == 0 {
+		return classes
+	}
+	if s, ok := strings.CutPrefix(item, "remove:"); ok {
+		if i := slices.Index(classes, s); i >= 0 {
+			return slices.Delete(classes, i, i+1)
+		}
+	} else {
+		if i := slices.Index(classes, s); i < 0 {
+			return append(classes, item)
+		}
+	}
+	return classes
 }

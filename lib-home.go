@@ -6,14 +6,14 @@ import (
 	"github.com/andreyvit/edb"
 )
 
-func (app *App) showAdminHome(rc *mvp.RC, in *struct{}) (*mvp.ViewData, error) {
+func (app *App) showLibraryHome(rc *mvp.RC, in *struct{}) (*mvp.ViewData, error) {
 	wls := edb.All(edb.TableScan[m.Waitlister](rc, edb.FullScan()))
 	users := edb.All(edb.TableScan[m.User](rc, edb.FullScan()))
 
 	return &mvp.ViewData{
 		View:         "superadmin/home",
-		Title:        "Admin",
-		SemanticPath: "admin",
+		Title:        "Library",
+		SemanticPath: "lib",
 		Data: struct {
 			Waitlisters []*m.Waitlister
 			Users       []*m.User

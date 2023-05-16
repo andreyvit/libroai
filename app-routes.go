@@ -11,10 +11,19 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 	b.Route("test", "GET /test/", app.showTestPage)
 	b.Route("signin", "GET /signin/", app.showSignIn)
 	b.Route("signin.process", "POST /signin/", app.handleSignIn, mvp.RateLimitPresetSpam)
+	b.Route("signout", "POST /signout/", app.handleSignOut)
 
 	b.Route("accountpicker", "GET /pick-account/", app.showPickAccountForm)
 
 	b.Route("chat.home", "GET /chat/", app.showChatHome)
+
+	b.Group("/lib", func(b *mvp.RouteBuilder) {
+		b.Route("lib.home", "GET /", app.showLibraryHome)
+	})
+
+	b.Group("/mod", func(b *mvp.RouteBuilder) {
+		b.Route("mod.home", "GET /", app.showModerationHome)
+	})
 
 	b.Group("/admin", func(b *mvp.RouteBuilder) {
 		b.Route("admin.home", "GET /", app.showAdminHome)

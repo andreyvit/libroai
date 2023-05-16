@@ -16,6 +16,7 @@ type ViewData struct {
 	*SiteData
 	Route *Route
 	App   *App
+	RC    *RC
 
 	// Content is only populated in layouts and contains the rendered content of the page
 	Content template.HTML
@@ -51,6 +52,7 @@ func (d *RenderData) Bind(value any, args ...any) *RenderData {
 	for i := 0; i < n; i += 2 {
 		key, value := args[i], args[i+1]
 		if keyStr, ok := key.(string); ok {
+			keyStr = strings.ReplaceAll(keyStr, "-", "_")
 			m[keyStr] = value
 		} else {
 			panic(fmt.Errorf("argument %d must be a string, got %T: %v", i, key, key))

@@ -128,6 +128,7 @@ func (app *App) loadTemplates() (*template.Template, error) {
 			kind = layoutTempl
 		} else if strings.HasPrefix(baseName, "c-") {
 			kind = componentTempl
+			name = baseName
 		} else if strings.Contains(baseName, "__") {
 			kind = partialTempl
 		} else {
@@ -173,6 +174,9 @@ func (app *App) loadTemplates() (*template.Template, error) {
 			code = "{{with .Data}}" + code + "{{end}}"
 		}
 		_, err = tmpl.tmpl.Parse(code)
+		if err != nil || strings.Contains(code, "{{error") {
+			log.Printf("Code of %s:\n==========\n%s\n==========", tmpl.name, code)
+		}
 		if err != nil {
 			return nil, fmt.Errorf("error parsing %v: %w", tmpl.path, err)
 		}

@@ -11,8 +11,9 @@ func (app *App) showSuperadminHome(rc *mvp.RC, in *struct{}) (*mvp.ViewData, err
 	users := edb.All(edb.TableScan[m.User](rc, edb.FullScan()))
 
 	return &mvp.ViewData{
-		View:  "superadmin/home",
-		Title: "Superadmin",
+		View:         "superadmin/home",
+		Title:        "Superadmin",
+		SemanticPath: "superadmin",
 		Data: struct {
 			Waitlisters []*m.Waitlister
 			Users       []*m.User
