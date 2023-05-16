@@ -1,0 +1,33 @@
+<div class="stack space-y-6">
+  <h1 class="text-3xl flex gap-2">
+    <c-link route="db.tables">db</c-link>
+    <span class="text-gray-300">/</span>
+    <span>{{.Table.Name}}</span>
+  </h1>
+
+  <div>
+    <c-link route="db.table.show" table={{$.Data.Table.Name}} key="--new">New</c-link>
+  </div>
+
+<table class="w-full | border-collapse">
+  <thead>
+    <th class="border text-center p-3">N</th>
+    <th class="border text-center p-3">ID</th>
+    <th class="border text-center p-3">Mod</th>
+    <th class="border text-center p-3">Ver</th>
+    <th class="border text-left p-3">Data</th>
+  </thead>
+  <tbody>
+    {{range .Rows}}
+    <tr>
+      <td class="border text-center p-3">{{.Index}}</td>
+      <td class="border text-center p-3"><c-link route="db.table.show" table={{$.Data.Table.Name}} key={{.Key}}>{{.Key}}</c-link></td>
+      <td class="border text-center p-3">{{.ModCount}}</td>
+      <td class="border text-center p-3">{{.SchemaVer}}</td>
+      <td class="border text-left p-3"><pre>{{.Data}}</pre></td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+
+</div>

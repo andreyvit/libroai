@@ -2,6 +2,8 @@ package mvp
 
 import (
 	"html/template"
+
+	"github.com/andreyvit/edb"
 )
 
 type Hooks struct {
@@ -10,6 +12,7 @@ type Hooks struct {
 	initRC       []func(app *App, rc *RC)
 	closeRC      []func(app *App, rc *RC)
 	initDB       []func(app *App, rc *RC)
+	makeRowKey   []func(app *App, tbl *edb.Table) any
 	resetAuth    []func(app *App, rc *RC)
 	postAuth     []func(app *App, rc *RC) error
 	helpers      []func(m template.FuncMap)
@@ -39,6 +42,10 @@ func (h *Hooks) CloseRC(f func(app *App, rc *RC)) {
 
 func (h *Hooks) InitDB(f func(app *App, rc *RC)) {
 	h.initDB = append(h.initDB, f)
+}
+
+func (h *Hooks) MakeRowKey(f func(app *App, tbl *edb.Table) any) {
+	h.makeRowKey = append(h.makeRowKey, f)
 }
 
 func (h *Hooks) ResetAuth(f func(app *App, rc *RC)) {
@@ -109,6 +116,16 @@ func runHooksFwd2E[T1, T2 any](hooks []func(a1 T1, a2 T2) error, a1 T1, a2 T2) e
 		err := f(a1, a2)
 		if err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func runHooksFwd2A[T1, T2 any](hooks []func(a1 T1, a2 T2) any, a1 T1, a2 T2) any {
+	for _, f := range hooks {
+		r := f(a1, a2)
+		if r != nil {
+			return r
 		}
 	}
 	return nil

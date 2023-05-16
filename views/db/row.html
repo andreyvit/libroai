@@ -1,0 +1,35 @@
+<div class="stack space-y-6">
+  <div class="cluster justify-between">
+    <h1 class="text-3xl flex gap-2">
+      <c-link route="db.tables">db</c-link>
+      <span class="text-gray-300">/</span>
+      <c-link route="db.table.list" table={{.Table.Name}}>{{.Table.Name}}</c-link>
+      <span class="text-gray-300">/</span>
+      <c-link route="db.table.show" table={{.Table.Name}} key={{.Key}}>{{.Key}}</c-link>
+    </h1>
+  </div>
+
+  <form method="POST" class="stack | space-y-4" data-turbo="false">
+    {{with .Errors}}
+    <div class="stack space-y-4 | text-red-800">
+      {{range .}}
+      <p>{{.}}</p>
+      {{end}}
+    </div>
+    {{end}}
+
+    <div>
+      ModCount: {{.ModCount}}
+    </div>
+    <input type="hidden" name="modcount" value="{{.ModCount}}">
+
+    <div>
+      <textarea name="data" class="w-full" rows="20">{{.Data}}</textarea>
+    </div>
+
+    <div class="cluster gap-6">
+      <button type="submit" name="save" class="border px-6 py-1 rounded hover:border-zinc-500">Save</button>
+      <button type="submit" name="delete" value="1" class="border px-6 py-1 rounded hover:border-zinc-500 text-red-600">Delete</button>
+    </div>
+  </form>
+</div>

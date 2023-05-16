@@ -4,10 +4,17 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 
 	"github.com/andreyvit/buddyd/mvp/flake"
 	"github.com/andreyvit/edb"
 )
+
+var flakeIDType = reflect.TypeOf(flake.ID(0))
+
+func FlakeIDType() reflect.Type {
+	return flakeIDType
+}
 
 func initAppDB(app *App, opt *AppOptions) {
 	app.gen = flake.NewGen(0, 0)
@@ -65,4 +72,14 @@ func (app *App) MustWrite(rc *RC, f func()) {
 		f()
 		return nil
 	}))
+}
+
+func (app *App) SetNewKeyOnRow(row any) bool {
+	tbl := app.Configuration.Schema.TableByRow(row)
+	key := runHooksFwd2A(app.Hooks.makeRowKey, app, tbl)
+	if key == nil {
+		return false
+	}
+	tbl.SetRowKey(row, key)
+	return true
 }

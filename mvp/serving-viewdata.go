@@ -3,13 +3,15 @@ package mvp
 import (
 	"fmt"
 	"html/template"
+	"strings"
 )
 
 type ViewData struct {
-	View   string
-	Title  string
-	Layout string
-	Data   any
+	View         string
+	Title        string
+	Layout       string
+	Data         any
+	SemanticPath string
 
 	*SiteData
 	Route *Route
@@ -24,6 +26,10 @@ type ViewData struct {
 func (vd *ViewData) DefaultPathParams() map[string]string {
 	defaults := make(map[string]string)
 	return defaults
+}
+
+func (vd *ViewData) IsActive(path string) bool {
+	return vd.SemanticPath == path || strings.HasPrefix(vd.SemanticPath, path+"/")
 }
 
 type SiteData struct {
@@ -57,5 +63,47 @@ func (d *RenderData) Bind(value any, args ...any) *RenderData {
 		Data:     value,
 		Args:     m,
 		ViewData: d.ViewData,
+	}
+}
+
+func (d *RenderData) Value(name string) (any, bool) {
+	v, found := d.Args[name]
+	return v, found
+}
+
+func (d *RenderData) String(name string) (string, bool) {
+	v, found := d.Value(name)
+	if found {
+		return stringifyArg(v), true
+	}
+	return "", false
+}
+
+func (d *RenderData) PopString(name string) (string, bool) {
+	v, found := d.String(name)
+	if found {
+		delete(d.Args, name)
+	}
+	return v, found
+}
+
+func isPassThruArg(k string) bool {
+	return passThruArgs[k] || strings.HasPrefix(k, "data-")
+}
+
+var passThruArgs = map[string]bool{
+	"id":     true,
+	"target": true,
+	"rel":    true,
+}
+
+func stringifyArg(v any) string {
+	switch v := v.(type) {
+	case nil:
+		return ""
+	case string:
+		return v
+	default:
+		return fmt.Sprint(v)
 	}
 }

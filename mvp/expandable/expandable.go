@@ -127,10 +127,27 @@ func (t *Derived[T, B]) Wrap(f func(*T)) func(*B) {
 		f(t.From(base))
 	}
 }
+func (t *Derived[T, B]) WrapAE(f func(*T) (any, error)) func(*B) (any, error) {
+	return func(base *B) (any, error) {
+		return f(t.From(base))
+	}
+}
 
 func Wrap2[T1, T2, B1, B2 any](f func(*T1, *T2), d1 *Derived[T1, B1], d2 *Derived[T2, B2]) func(*B1, *B2) {
 	return func(v1 *B1, v2 *B2) {
 		f(d1.From(v1), d2.From(v2))
+	}
+}
+
+func Wrap21[T1, T2, B1 any](f func(*T1, *T2), d1 *Derived[T1, B1]) func(*B1, *T2) {
+	return func(v1 *B1, v2 *T2) {
+		f(d1.From(v1), v2)
+	}
+}
+
+func Wrap21A[T1, T2, B1 any](f func(*T1, *T2) any, d1 *Derived[T1, B1]) func(*B1, *T2) any {
+	return func(v1 *B1, v2 *T2) any {
+		return f(d1.From(v1), v2)
 	}
 }
 

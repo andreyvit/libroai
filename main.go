@@ -159,6 +159,7 @@ func newApp() *App {
 func setupHooks(app *App) {
 	app.Hooks.InitApp(fullApp.Wrap(initApp))
 	app.Hooks.InitDB(expandable.Wrap2(initDB, fullApp, fullRC))
+	app.Hooks.MakeRowKey(expandable.Wrap21A(makeRowKey, fullApp))
 	app.Hooks.ResetAuth(expandable.Wrap2(resetAuth, fullApp, fullRC))
 	app.Hooks.PostAuth(expandable.Wrap2E(loadSessionAndUser, fullApp, fullRC))
 	app.Hooks.SiteRoutes(mvp.DefaultSite, app.registerRoutes)
@@ -175,6 +176,13 @@ func initDB(app *App, rc *RC) {
 	}
 	acc := ensureAccount(app, rc, "SuperSandbox")
 	ensureRootUser(app, rc, email, []m.AccountID{acc.ID})
+}
+
+func makeRowKey(app *App, tbl *edb.Table) any {
+	if tbl.KeyType() == mvp.FlakeIDType() {
+		return app.NewID()
+	}
+	return nil
 }
 
 func ensureRootUser(app *App, rc *RC, email string, accountIDs []m.AccountID) *m.User {

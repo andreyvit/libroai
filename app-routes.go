@@ -3,6 +3,7 @@ package main
 import "github.com/andreyvit/buddyd/mvp"
 
 func (app *App) registerRoutes(b *mvp.RouteBuilder) {
+	b.UseIn("authenticate", app.AuthenticateRequestMiddleware)
 	b.Static("/static")
 	b.Route("landing.home", "GET /", app.showLandingHome)
 	b.Route("landing.signup", "POST /start", app.handleLandingSignup)
@@ -20,7 +21,21 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 	})
 
 	b.Group("/superadmin", func(b *mvp.RouteBuilder) {
+		b.UseIn("authorize", fullRC.WrapAE(requireSuperadmin))
 		b.Route("superadmin.home", "GET /", app.showSuperadminHome)
 		// b.Route("superadmin.superadmins.save", "POST /superadmins/", app.saveSuperadmin)
+
+		b.Group("/db", func(b *mvp.RouteBuilder) {
+			b.Route("db.tables", "GET /", app.listSuperadminTables)
+			b.Route("db.table.list", "GET /:table/", app.listSuperadminTableRows)
+			b.Route("db.table.show", "GET /:table/rows/:key", app.handleSuperadminTableRowForm)
+			b.Route("db.table.save", "POST /:table/rows/:key", app.handleSuperadminTableRowForm)
+
+			// b.Route("superadmin.db.dump.simple", "GET /dump.txt", app.showDBRows)
+			// b.Route("superadmin.db.dump.full", "GET /dump2.txt", app.showDBDump)
+			// b.Route("superadmin.db.dump.stats", "GET /stats.txt", app.showDBStats)
+
+			// g.bg.Handle("GET", "/backup", app.downloadDBBackup)
+		})
 	})
 }

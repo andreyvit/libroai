@@ -1,0 +1,11 @@
+<div class="stack space-y-6">
+  <h1 class="text-3xl flex gap-2">
+    <span>db</span>
+  </h1>
+
+  {{range .Tables}}
+  <div class="Table">
+    <h2><c-link route="db.table.list" table={{.Name}}>{{.Name}}</c-link></h2>
+  </div>
+  {{end}}
+</div>

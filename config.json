@@ -47,6 +47,7 @@
         "PrettyJSON": true,
         "BaseURL": "http://localhost:3003/",
         "AutoEncryptSecrets": true,
+        "AllowInsecureHttp": true,
     },
 
     "local-andreyvit": {

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/andreyvit/buddyd/internal/flogger"
 	"github.com/andreyvit/buddyd/internal/httperrors"
 	"github.com/andreyvit/buddyd/mvp/flake"
 	"github.com/andreyvit/buddyd/mvp/jwt"
@@ -24,6 +25,7 @@ type Auth struct {
 // }
 
 func (app *App) DecodeAuthToken(rc *RC, token string) error {
+	flogger.Log(rc, "DecodeAuthToken: %q", token)
 	runHooksFwd2(app.Hooks.resetAuth, app, rc)
 
 	c := TokenDecoding{
@@ -199,7 +201,7 @@ func (app *App) authenticateRequest(rc *RC) error {
 	return nil
 }
 
-func (app *App) authenticateRequestMiddleware(rc *RC) (any, error) {
+func (app *App) AuthenticateRequestMiddleware(rc *RC) (any, error) {
 	return nil, app.authenticateRequest(rc)
 }
 

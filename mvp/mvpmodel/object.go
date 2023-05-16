@@ -83,7 +83,7 @@ func ParseRef(s string) (Ref, error) {
 	typeStr, idStr, ok := strings.Cut(s, ":")
 	if ok {
 		typ, err := ParseType(typeStr)
-		if err == nil {
+		if err == nil || typeStr == "" {
 			id, err := flake.Parse(idStr)
 			if err == nil {
 				return Ref{typ, id}, nil
