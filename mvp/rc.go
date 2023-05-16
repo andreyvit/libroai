@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/andreyvit/buddyd/mvp/flake"
+	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
 	"github.com/andreyvit/edb"
 	"github.com/uptrace/bunrouter"
 )
@@ -46,6 +48,8 @@ import (
 type RC struct {
 	tx *edb.Tx
 
+	auth Auth
+
 	parent context.Context
 	values []any
 	app    *App
@@ -69,7 +73,8 @@ func NewRC(ctx context.Context, app *App, requestID string) *RC {
 	if requestID == "" {
 		requestID = RandomHex(32)
 	}
-	rc := &RC{
+	rc := BaseRC.New()
+	*rc = RC{
 		parent:    ctx,
 		values:    newValueSet(),
 		app:       app,
@@ -86,6 +91,26 @@ func NewHTTPRC(app *App, w http.ResponseWriter, r bunrouter.Request) *RC {
 	rc.Request = r
 	rc.RespWriter = w
 	return rc
+}
+
+func (rc *RC) App() *App {
+	return rc.app
+}
+
+func (rc *RC) SessionID() flake.ID {
+	return rc.auth.SessionID
+}
+
+func (rc *RC) ActorRef() mvpm.Ref {
+	return rc.auth.ActorRef
+}
+
+func (rc *RC) IsLoggedIn() bool {
+	return !rc.auth.ActorRef.IsZero()
+}
+
+func (rc *RC) Auth() Auth {
+	return rc.auth
 }
 
 func (rc *RC) BaseApp() *App {

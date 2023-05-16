@@ -124,3 +124,21 @@ func (app *App) Redirect(statusCode int, name string, extras ...any) *Redirect {
 		Status: statusCode,
 	}
 }
+
+func (rc *RC) DefaultPathParams() map[string]string {
+	// TODO: hook
+	return nil
+}
+
+func (rc *RC) Redirect(statusCode int, name string, extras ...any) *Redirect {
+	dflts := rc.DefaultPathParams()
+	if extras == nil {
+		extras = []any{dflts}
+	} else {
+		e := make([]any, 0, len(extras)+1)
+		e = append(e, dflts)
+		e = append(e, extras...)
+		extras = e
+	}
+	return rc.app.Redirect(statusCode, name, extras...)
+}

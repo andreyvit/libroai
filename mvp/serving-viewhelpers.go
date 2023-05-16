@@ -31,6 +31,29 @@ func (app *App) registerBuiltinViewHelpers(m template.FuncMap) {
 		}
 		return template.URL(d.App.URL(name, extras...))
 	}
+	m["repeat"] = func(n int) []int {
+		r := make([]int, 0, n)
+		for i := 0; i < n; i++ {
+			r = append(r, i)
+		}
+		return r
+	}
+	m["pick"] = func(i int, values ...any) any {
+		return values[i%len(values)]
+	}
+	m["picks"] = func(s string, values ...any) any {
+		for i := 0; i < len(values)-1; i += 2 {
+			if i+1 >= len(values) {
+				// "else" clause
+				return values[i]
+			}
+			key := fmt.Sprint(values[i])
+			if key == s {
+				return values[i+1]
+			}
+		}
+		return nil
+	}
 }
 
 func renderSVG(data *RenderData) template.HTML {
@@ -81,5 +104,5 @@ func Attr(name string, value any) template.HTMLAttr {
 	if value == true {
 		return template.HTMLAttr(" " + name)
 	}
-	return template.HTMLAttr(" " + name + "=" + template.HTMLEscapeString(fmt.Sprint(value)))
+	return template.HTMLAttr(" " + name + "=\"" + template.HTMLEscapeString(fmt.Sprint(value)) + "\"")
 }

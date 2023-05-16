@@ -32,10 +32,16 @@ func TestRoundTrip(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c, err := DecodeHS256String(test.input, testKey)
+			var token Token
+			err := token.ParseString(test.input)
 			if err != nil {
 				t.Fatal(err)
 			}
+			err = token.ValidateHS256(testKey)
+			if err != nil {
+				t.Fatal(err)
+			}
+			c := token.Claims()
 			p := string(must(json.Marshal(c)))
 			if p != test.payload {
 				t.Errorf("DecodeHS256 = %s, wanted %s", p, test.payload)
@@ -46,7 +52,7 @@ func TestRoundTrip(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			output := SignHS256String(c, testKey)
+			output := SignHS256String(c, nil, testKey)
 			if test.newToken == "" {
 				test.newToken = test.input
 			}

@@ -11,17 +11,19 @@ import (
 
 func (app *App) showLandingHome(rc *mvp.RC, in *struct{}) (*mvp.ViewData, error) {
 	return &mvp.ViewData{
-		View:  "home",
-		Title: "LibroAI",
-		Data:  struct{}{},
+		View:   "home",
+		Title:  "LibroAI",
+		Layout: "landing",
+		Data:   struct{}{},
 	}, nil
 }
 
 func (app *App) showWaitlist(rc *mvp.RC, in *struct{}) (*mvp.ViewData, error) {
 	return &mvp.ViewData{
-		View:  "waitlist",
-		Title: "You are on LibroAI waitlist",
-		Data:  struct{}{},
+		View:   "waitlist",
+		Title:  "You are on LibroAI waitlist",
+		Layout: "bare",
+		Data:   struct{}{},
 	}, nil
 }
 

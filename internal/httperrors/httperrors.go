@@ -12,7 +12,48 @@ import (
 	"strings"
 )
 
-type Error interface {
+type Error struct {
+	id         string
+	statusCode int
+	pubmsg     string
+	cause      error
+	extras     map[string]interface{}
+}
+
+func (err *Error) Unwrap() error {
+	return err.cause
+}
+
+func (err *Error) Error() string {
+	return err.String()
+}
+
+func (err *Error) HTTPCode() int {
+	return err.statusCode
+}
+
+func (err *Error) ErrorID() string {
+	return err.id
+}
+
+func (err *Error) PublicError() string {
+	return err.pubmsg
+}
+
+func (err *Error) ForeachExtra(f func(k string, v interface{})) {
+	if err.extras != nil {
+		for k, v := range err.extras {
+			f(k, v)
+		}
+	}
+}
+
+type codeAndID interface {
+	HTTPCode() int
+	ErrorID() string
+}
+
+type Interface interface {
 	error
 	HTTPCode() int
 	ErrorID() string
@@ -21,12 +62,34 @@ type Error interface {
 }
 
 type BaseError struct {
-	id       string
-	httpcode int
+	id         string
+	statusCode int
 }
 
-func New(id string, httpcode int) BaseError {
-	return BaseError{id, httpcode}
+func New(statusCode int, id string) *Error {
+	// id := strings.ToLower(strings.ReplaceAll(http.StatusText(statusCode), " ", "_"))
+	return &Error{
+		id:         id,
+		statusCode: statusCode,
+		pubmsg:     "",
+		cause:      nil,
+		extras:     nil,
+	}
+}
+
+func Errorf(statusCode int, id string, msg string, args ...any) Interface {
+	// id := strings.ToLower(strings.ReplaceAll(http.StatusText(statusCode), " ", "_"))
+	return &Error{
+		id:         id,
+		statusCode: statusCode,
+		pubmsg:     fmt.Sprintf(msg, args...),
+		cause:      nil,
+		extras:     nil,
+	}
+}
+
+func Define(statusCode int, id string) BaseError {
+	return BaseError{id, statusCode}
 }
 
 func (base BaseError) Error() string {
@@ -34,7 +97,7 @@ func (base BaseError) Error() string {
 }
 
 func (base BaseError) HTTPCode() int {
-	return base.httpcode
+	return base.statusCode
 }
 
 func (base BaseError) ErrorID() string {
@@ -49,15 +112,15 @@ func (base BaseError) ForeachExtra(f func(k string, v interface{})) {
 func (base BaseError) Is(err error) bool {
 	if err == nil {
 		return false
-	} else if e, ok := err.(Error); ok {
-		return e.ErrorID() == base.id && e.HTTPCode() == base.httpcode
+	} else if e, ok := err.(codeAndID); ok {
+		return e.ErrorID() == base.id && e.HTTPCode() == base.statusCode
 	} else {
 		return false
 	}
 }
 
 func (base BaseError) String() string {
-	return fmt.Sprintf("%s [HTTP %d]", base.id, base.httpcode)
+	return fmt.Sprintf("%s [HTTP %d]", base.id, base.statusCode)
 }
 
 var (
@@ -70,7 +133,7 @@ var (
 		Examples: critical external API is unreachable, server is out of
 		disk space, general unexpected failure.
 	*/
-	Unavailable = New("unavail", http.StatusInternalServerError)
+	Unavailable = Define(http.StatusInternalServerError, "unavail")
 
 	/*
 		Overload signals expected temporary unavailability of the endpoint
@@ -78,7 +141,7 @@ var (
 
 		An appropriate client behavior is to retry with increasing backoff.
 	*/
-	Overload = New("unavail", http.StatusServiceUnavailable)
+	Overload = Define(http.StatusServiceUnavailable, "unavail")
 
 	/*
 		BadRequest signals a wildly incorrect HTTP call that uses invalid
@@ -92,7 +155,7 @@ var (
 		An appropriate client behavior is to log an error and fail the operation
 		with a generic error message asking to contact support.
 	*/
-	BadRequest = New("bad_request", http.StatusBadRequest)
+	BadRequest = Define(http.StatusBadRequest, "bad_request")
 
 	/*
 		NotFound signals a that the resource that the HTTP call primarily refers
@@ -107,7 +170,7 @@ var (
 		An appropriate client behavior is to remove the UI corresponding to
 		the data that this API call operates on.
 	*/
-	NotFound = New("not_found", http.StatusNotFound)
+	NotFound = Define(http.StatusNotFound, "not_found")
 
 	/*
 		MethodNotAllowed signals a wildly incorrect HTTP call, caused by
@@ -116,73 +179,50 @@ var (
 		An appropriate client behavior is to log an error and fail the operation
 		with a generic error message asking to contact support.
 	*/
-	MethodNotAllowed = New("bad_request", http.StatusMethodNotAllowed)
+	MethodNotAllowed = Define(http.StatusMethodNotAllowed, "bad_request")
 )
 
-type DetailedError struct {
-	BaseError
-	pubmsg string
-	cause  error
-	extras map[string]interface{}
+func (base BaseError) Msgf(format string, args ...any) *Error {
+	return base.Msg(fmt.Sprintf(format, args...))
 }
-
-func (err *DetailedError) Unwrap() error {
-	return err.cause
-}
-
-func (err *DetailedError) Error() string {
-	return err.String()
-}
-
-func (err *DetailedError) HTTPCode() int {
-	return err.httpcode
-}
-
-func (err *DetailedError) ErrorID() string {
-	return err.id
-}
-
-func (err *DetailedError) PublicError() string {
-	return err.pubmsg
-}
-
-func (err *DetailedError) ForeachExtra(f func(k string, v interface{})) {
-	if err.extras != nil {
-		for k, v := range err.extras {
-			f(k, v)
-		}
+func (base BaseError) Msg(pubmsg string) *Error {
+	err := &Error{
+		id:         base.id,
+		statusCode: base.statusCode,
 	}
-}
-
-func (base BaseError) Msg(pubmsg string) *DetailedError {
-	err := &DetailedError{BaseError: base}
 	err.pubmsg = pubmsg
 	return err
 }
-func (err *DetailedError) Msg(pubmsg string) *DetailedError {
+func (err *Error) Msgf(format string, args ...any) *Error {
+	return err.Msg(fmt.Sprintf(format, args...))
+}
+func (err *Error) Msg(pubmsg string) *Error {
 	err.pubmsg = pubmsg
 	return err
 }
 
-func (base BaseError) Wrap(cause error) Error {
+func (base BaseError) Wrap(cause error) Interface {
 	return base.WrapMsg(cause, "")
 }
 
-func (base BaseError) WrapMsg(cause error, pubmsg string) Error {
+func (base BaseError) WrapMsg(cause error, pubmsg string) Interface {
 	if cause == nil {
 		return nil
 	}
-	var e Error
+	var e Interface
 	if errors.As(cause, &e) {
 		return e // don't re-wrap if already wrapped
 	}
-	err := &DetailedError{BaseError: base}
+	err := &Error{
+		id:         base.id,
+		statusCode: base.statusCode,
+	}
 	err.pubmsg = pubmsg
 	err.cause = cause
 	if e, ok := cause.(interface{ HTTPCode() int }); ok {
-		err.httpcode = e.HTTPCode()
+		err.statusCode = e.HTTPCode()
 	} else if e, ok := cause.(interface{ HTTPStatusCode() int }); ok {
-		err.httpcode = e.HTTPStatusCode()
+		err.statusCode = e.HTTPStatusCode()
 	}
 	if e, ok := cause.(interface{ ErrorID() string }); ok {
 		err.id = e.ErrorID()
@@ -193,16 +233,20 @@ func (base BaseError) WrapMsg(cause error, pubmsg string) Error {
 	return err
 }
 
-func (base BaseError) WrapCustom(prototype, cause error) *DetailedError {
+func (base BaseError) WrapCustom(prototype, cause error) *Error {
 	if prototype == nil && cause == nil {
 		return nil
 	}
-	err := &DetailedError{BaseError: base, cause: cause}
+	err := &Error{
+		id:         base.id,
+		statusCode: base.statusCode,
+		cause:      cause,
+	}
 
 	if e, ok := prototype.(interface{ HTTPCode() int }); ok {
-		err.httpcode = e.HTTPCode()
+		err.statusCode = e.HTTPCode()
 	} else if e, ok := prototype.(interface{ HTTPStatusCode() int }); ok {
-		err.httpcode = e.HTTPStatusCode()
+		err.statusCode = e.HTTPStatusCode()
 	}
 	if e, ok := prototype.(interface{ ErrorID() string }); ok {
 		err.id = e.ErrorID()
@@ -213,11 +257,14 @@ func (base BaseError) WrapCustom(prototype, cause error) *DetailedError {
 	return err
 }
 
-func (base BaseError) Extra(k string, v interface{}) *DetailedError {
-	return (&DetailedError{BaseError: base}).Extra(k, v)
+func (base BaseError) Extra(k string, v interface{}) *Error {
+	return (&Error{
+		id:         base.id,
+		statusCode: base.statusCode,
+	}).Extra(k, v)
 }
 
-func (err *DetailedError) Extra(k string, v interface{}) *DetailedError {
+func (err *Error) Extra(k string, v interface{}) *Error {
 	if err.extras == nil {
 		err.extras = map[string]interface{}{k: v}
 	} else {
@@ -226,9 +273,19 @@ func (err *DetailedError) Extra(k string, v interface{}) *DetailedError {
 	return err
 }
 
-func (err *DetailedError) String() string {
+func (err *Error) Is(e error) bool {
+	if e == nil {
+		return false
+	} else if e, ok := e.(codeAndID); ok {
+		return e.ErrorID() == err.id && e.HTTPCode() == err.statusCode
+	} else {
+		return false
+	}
+}
+
+func (err *Error) String() string {
 	var buf strings.Builder
-	buf.WriteString(err.BaseError.String())
+	buf.WriteString(fmt.Sprintf("%s [HTTP %d]", err.id, err.statusCode))
 	if err.pubmsg != "" {
 		buf.WriteString(" pubmsg=")
 		buf.WriteString(strconv.Quote(err.pubmsg))
@@ -257,7 +314,7 @@ func HTTPMessage(err Error) string {
 func ErrorID(err error) string {
 	if err == nil {
 		return ""
-	} else if e, ok := err.(Error); ok {
+	} else if e, ok := err.(Interface); ok {
 		return e.ErrorID()
 	} else {
 		return ""
@@ -290,7 +347,7 @@ const (
 	ErrorIDKey     = "ErrorID"
 )
 
-func value(err Error, key string) interface{} {
+func value(err Interface, key string) interface{} {
 	switch key {
 	case HTTPCodeKey:
 		return err.HTTPCode()
@@ -313,7 +370,7 @@ func Value(err error, key string) interface{} {
 	if err == nil {
 		return ""
 	} else {
-		var e Error
+		var e Interface
 		if errors.As(err, &e) {
 			return value(e, key)
 		} else {
@@ -325,7 +382,7 @@ func Value(err error, key string) interface{} {
 func String(err error, keys ...string) string {
 	if err == nil {
 		return ""
-	} else if e, ok := err.(Error); ok {
+	} else if e, ok := err.(Interface); ok {
 		var buf strings.Builder
 		for _, k := range keys {
 			v := value(e, k)

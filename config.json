@@ -26,6 +26,10 @@
 
         "EmailDefaultFrom": "libroai@tarantsov.com",
         "PostmarkDefaultMessageStream": "outbound",
+        "SignInCodeExpiration": "15m",
+        "SignInCodeResendInterval": "30s",
+
+        "RootUserEmail": "andrey@tarantsov.com",
     },
 
     "@localdevortest": {
@@ -41,15 +45,18 @@
         "ServeAssetsFromDisk": true,
         "CrashOnPanic": true,
         "PrettyJSON": true,
-        "BaseURL": "http://localhost:3003/"
+        "BaseURL": "http://localhost:3003/",
+        "AutoEncryptSecrets": true,
     },
 
     "local-andreyvit": {
+        "AppID": "buddy-andrey",
         "AppName": "BuddyAndrey",
         "LocalOverridesFile": "config.local.json",
     },
 
     "local-dottedmag": {
+        "AppID": "buddy-mag",
         "AppName": "BuddyMag",
     },
 
@@ -58,14 +65,16 @@
     },
 
     "stag": {
+        "AppID": "buddy-stag",
         "AppName": "BuddyStage",
     },
 
     "prod": {
+        "AppID": "buddy",
+        "AppName": "Buddy",
         "KeyringFile": "/srv/libroai/.keyring",
         "DataDir": "/srv/libroai/data",
         "LocalOverridesFile": "/srv/libroai/libroai.json",
-        "AppName": "Buddy",
         "BaseURL": "https://libroai.com/",
         "BindAddr": "127.0.0.1",
         "BindPort": 4001,
@@ -78,6 +87,7 @@
 
     "test": {
         "AppName": "BuddyTest",
+        "AppID": "buddy-test",
         "DataDir": "<temp>",
         "BindAddr": "127.0.0.1",
         "BindPort": 3001,

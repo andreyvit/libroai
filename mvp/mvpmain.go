@@ -13,24 +13,29 @@ import (
 	"time"
 
 	"github.com/andreyvit/buddyd/mvp/director"
+	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
 	"github.com/andreyvit/httpserver"
 )
 
 func Main(ge *Configuration) {
 	log.SetOutput(os.Stderr)
 	log.SetFlags(0)
+	time.Sleep(time.Millisecond) // ensure unique flake IDs
 
 	if ge.ConfigFileName == "" {
 		ge.ConfigFileName = "config.json"
 	}
 	if ge.SecretsFileName == "" {
-		ge.SecretsFileName = "config-secrets.txt"
+		ge.SecretsFileName = "config.secrets.txt"
 	}
 	if ge.StaticSubdir == "" {
 		ge.StaticSubdir = "static"
 	}
 	if ge.ViewsSubdir == "" {
 		ge.ViewsSubdir = "views"
+	}
+	if ge.AuthTokenCookieName == "" {
+		ge.AuthTokenCookieName = "auth"
 	}
 	if ge.LocalDevAppRoot == "" {
 		_, file, _, _ := runtime.Caller(1)
@@ -41,6 +46,10 @@ func Main(ge *Configuration) {
 	}
 	for k := range ge.Envs {
 		ge.Envs[k] = append(ge.Envs[k], k)
+	}
+
+	for t, names := range ge.Types {
+		mvpm.RegisterType(t, names...)
 	}
 
 	dir := director.New()
@@ -90,7 +99,8 @@ func Main(ge *Configuration) {
 		return
 	}
 
-	app := ge.NewApp()
+	app := BaseApp.New()
+	settings.Configuration.SetupHooks(app)
 	app.Initialize(settings, AppOptions{})
 	defer app.Close()
 

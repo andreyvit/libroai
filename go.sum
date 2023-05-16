@@ -4,6 +4,8 @@ github.com/andreyvit/envloader v0.0.0-20230318112307-11352e2d3468 h1:dYRFGqr3mgx
 github.com/andreyvit/envloader v0.0.0-20230318112307-11352e2d3468/go.mod h1:Y42Po2x1aHSYOjSjRJUMRxPvJfEnkkHQ3hCzaSkYRKg=
 github.com/andreyvit/httpform v0.0.0-20230317113906-c6b9ae229f96 h1:19e2UmF1oLPISMhJU5qEmcfxWQA42Tj2fKTp6GJsraE=
 github.com/andreyvit/httpform v0.0.0-20230317113906-c6b9ae229f96/go.mod h1:wQSm2DISwNRAOpsS73VRxyIBT9ZCW0t355OM3bFekMU=
+github.com/andreyvit/httpform v0.1.5 h1:n1CD6tjNONSDRnZCooiZ/OgDgOZUhPuptvdt/5bLcjg=
+github.com/andreyvit/httpform v0.1.5/go.mod h1:wQSm2DISwNRAOpsS73VRxyIBT9ZCW0t355OM3bFekMU=
 github.com/andreyvit/httpserver v0.0.0-20230318205843-f3fda2b554b5 h1:0ZOOtzyfCmLo7uC4L5T0RQz1KfnO1CgloBiyVzpYP7Y=
 github.com/andreyvit/httpserver v0.0.0-20230318205843-f3fda2b554b5/go.mod h1:EB1+OF1waj9wGowDE1XqHLmET8vq9dsEc/exB3gKlgI=
 github.com/andreyvit/jsonfix v1.0.0 h1:S5BFMo08D6Uh3mnxtR8/Mtu+uzREQqgVplpZUI1wuXs=

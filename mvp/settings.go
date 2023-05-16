@@ -3,17 +3,18 @@ package mvp
 import (
 	"bytes"
 	"embed"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strings"
 
 	"github.com/andreyvit/buddyd/internal/postmark"
 	"github.com/andreyvit/buddyd/mvp/jsonext"
+	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
 	"github.com/andreyvit/edb"
 	"github.com/andreyvit/jsonfix"
 	"github.com/andreyvit/plainsecrets"
@@ -40,15 +41,14 @@ type Configuration struct {
 	ViewsSubdir     string
 	LocalDevAppRoot string
 
-	NewSettings  func() *Settings
-	FullSettings func(*Settings) any
-	NewApp       func() *App
-	NewRC        func() *RC
-	LoadSecrets  func(*Settings, Secrets)
+	SetupHooks  func(app *App)
+	LoadSecrets func(*Settings, Secrets)
 
 	Schema *edb.Schema
+	Types  map[mvpm.Type][]string
 
 	AuthTokenCookieName string
+	AuthTokenKeys       mvpm.NamedKeySet
 }
 
 func (ge *Configuration) ValidEnvs() []string {
@@ -74,7 +74,8 @@ type Settings struct {
 	WorkerCount int
 
 	// app options
-	AppName                  string
+	AppName                  string // user-visible app name
+	AppID                    string // unchangeable internal name for various identification purposes
 	BaseURL                  string
 	RateLimits               map[RateLimitPreset]map[RateLimitGranularity]RateLimitSettings
 	MaxRateLimitRequestDelay jsonext.Duration
@@ -86,6 +87,8 @@ type Settings struct {
 	PostmarkDefaultMessageStream string
 	EmailDefaultFrom             string
 	EmailDefaultLayout           string
+
+	JWTIssuers []string // Issuer and Audience for this app's tokens
 }
 
 type Secrets map[string]string
@@ -109,11 +112,50 @@ func (secrets Secrets) Required(name string, val interface{ Set(string) error })
 	}
 }
 
+func (secrets Secrets) OptionalNamedKeySet(name string, keys *mvpm.NamedKeySet, minKeyLen, maxKeyLen int) bool {
+	active := secrets[name]
+	if active == "" {
+		return false
+	}
+
+	m := make(map[string][]byte)
+	prefix := name + "_"
+	for k, v := range secrets {
+		if keyName, ok := strings.CutPrefix(k, prefix); ok {
+			key, err := hex.DecodeString(v)
+			if err != nil {
+				log.Fatalf("** ERROR: %s: invalid hex value: %v", k, err)
+			}
+			if len(key) < minKeyLen {
+				log.Fatalf("** ERROR: %s: key is only %d bytes, wanted at least %d bytes", k, len(key), minKeyLen)
+			}
+			if maxKeyLen > 0 && len(key) > maxKeyLen {
+				log.Fatalf("** ERROR: %s: key is %d bytes, wanted at most %d bytes", k, len(key), maxKeyLen)
+			}
+			m[keyName] = key
+		}
+	}
+	if len(m) == 0 {
+		return false
+	}
+	if m[active] == nil {
+		log.Fatalf("** ERROR: %s: active key %q is not in the set", name, active)
+	}
+	*keys = mvpm.NamedKeySet{Keys: m, ActiveKeyName: active}
+	return true
+}
+
+func (secrets Secrets) RequiredNamedKeySet(name string, keys *mvpm.NamedKeySet, minKeyLen, maxKeyLen int) {
+	ok := secrets.OptionalNamedKeySet(name, keys, minKeyLen, maxKeyLen)
+	if !ok {
+		log.Fatalf("** ERROR: missing secret key set %s", name)
+	}
+}
+
 func LoadConfig(ge *Configuration, env string, installHook func(*Settings)) *Settings {
-	settings := ge.NewSettings()
+	settings := BaseSettings.New()
 	settings.Env = env
-	settings.Configuration = ge
-	full := ge.FullSettings(settings)
+	full := BaseSettings.Full(settings)
 
 	configBySection := make(map[string]json.RawMessage)
 
@@ -129,8 +171,8 @@ func LoadConfig(ge *Configuration, env string, installHook func(*Settings)) *Set
 			parseConfigSections(ge, ge.Envs[e], configBySection, full)
 		} else {
 			// parse all other sections to ensure we're not surprised after deployment
-			dummy := ge.NewSettings()
-			parseConfigSections(ge, ge.Envs[e], configBySection, ge.FullSettings(dummy))
+			dummy := BaseSettings.Full(BaseSettings.New())
+			parseConfigSections(ge, ge.Envs[e], configBySection, dummy)
 		}
 	}
 
@@ -168,32 +210,34 @@ func LoadConfig(ge *Configuration, env string, installHook func(*Settings)) *Set
 		log.Fatalf("** %v", fmt.Errorf("config.secrets.txt: %w", err))
 	}
 
-	if settings.AutoEncryptSecrets {
-		_, thisFile, _, _ := runtime.Caller(0)
-		if thisFile != "" {
-			secretsFile := filepath.Join(filepath.Dir(thisFile), ge.SecretsFileName)
-			_, err := os.Stat(secretsFile)
-			if err == nil {
-				n, failed, err := vals.EncryptAllInFile(secretsFile, keyring)
-				if err != nil {
-					log.Fatalf("** %v", fmt.Errorf("autoencrypt failed: %w", err))
-				}
-				if len(failed) > 0 {
-					var msgs []string
-					var msgSet = make(map[string]bool)
-					for _, v := range failed {
-						s := v.Err.Error()
-						if !msgSet[s] {
-							msgSet[s] = true
-							msgs = append(msgs, s)
-						}
-					}
-					log.Fatalf("** %v", fmt.Errorf("autoencrypt failed: %s", strings.Join(msgs, ", ")))
-				}
-				if n > 0 {
-					log.Printf("Auto-encrypted %d secret(s).", n)
+	log.Printf("Settings = %s", must(json.Marshal(settings)))
+	settings.Configuration = ge
+
+	if settings.AutoEncryptSecrets && ge.LocalDevAppRoot != "" {
+		secretsFile := filepath.Join(ge.LocalDevAppRoot, ge.SecretsFileName)
+		_, err := os.Stat(secretsFile)
+		if err != nil {
+			log.Fatalf("Cannot autoencrypt secrets because file %v does not exist", secretsFile)
+		}
+
+		n, failed, err := vals.EncryptAllInFile(secretsFile, keyring)
+		if err != nil {
+			log.Fatalf("** %v", fmt.Errorf("autoencrypt failed: %w", err))
+		}
+		if len(failed) > 0 {
+			var msgs []string
+			var msgSet = make(map[string]bool)
+			for _, v := range failed {
+				s := v.Err.Error()
+				if !msgSet[s] {
+					msgSet[s] = true
+					msgs = append(msgs, s)
 				}
 			}
+			log.Fatalf("** %v", fmt.Errorf("autoencrypt failed: %s", strings.Join(msgs, ", ")))
+		}
+		if n > 0 {
+			log.Printf("Auto-encrypted %d secret(s).", n)
 		}
 	}
 

@@ -1,0 +1,29 @@
+<div class="container mx-auto my-8 space-y-12">
+    <section class="space-y-6">
+        <h2 class="text-xl my-4">Waitlist</h2>
+
+        <div class="grid gap-y-3">
+        {{range .Waitlisters}}
+            <div class="">{{.Email}}</div>
+        {{end}}
+        </div>
+    </section>
+
+    <section class="space-y-6">
+        <h2 class="text-xl my-4">Users</h2>
+
+        <div class="grid grid-cols-3 gap-x-2 gap-y-3">
+        {{range .Users}}
+            <div class="">
+                <div>{{.Name}}</div>
+                <div>{{.Email}}</div>
+                <div>{{.ID}}</div>
+            </div>
+            <div class="">{{.Role}}</div>
+            <div class="">{{.Status}}</div>
+        {{end}}
+        </div>
+
+        <!-- <form method="POST" action=""> -->
+    </section>
+</div>

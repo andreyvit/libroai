@@ -6,17 +6,13 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"mime"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"unsafe"
 )
-
-func As[T, Base any](base *Base) *T {
-	return (*T)(unsafe.Pointer(base))
-}
 
 func must[T any](v T, err error) T {
 	if err != nil {
@@ -113,6 +109,12 @@ func TrimPort(host string) string {
 	return h
 }
 
+func DisableCaching(w http.ResponseWriter) {
+	w.Header().Set("Expires", "Thu, 01 Jan 1970 00:00:00 UTC")
+	w.Header().Set("Cache-Control", "no-cache, no-store, no-transform, must-revalidate, private, max-age=0")
+	w.Header().Set("Pragma", "no-cache")
+}
+
 func MarkPublicImmutable(w http.ResponseWriter) {
 	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 }
@@ -123,6 +125,18 @@ func MarkPublicMutable(w http.ResponseWriter) {
 
 func MarkPrivateMutable(w http.ResponseWriter) {
 	w.Header().Set("Cache-Control", "private, no-cache, max-age=0")
+}
+
+func DetermineMIMEType(r *http.Request) string {
+	s := r.Header.Get("Content-Type")
+	if s == "" {
+		return ""
+	}
+	ctype, _, err := mime.ParseMediaType(s)
+	if ctype == "" || err != nil {
+		return ""
+	}
+	return ctype
 }
 
 type action func()
@@ -139,6 +153,12 @@ func (f action) Set(string) error {
 	f()
 	os.Exit(0)
 	return nil
+}
+
+// CanonicalEmail returns an email suitable for unique checks.
+func CanonicalEmail(email string) string {
+	email = strings.TrimSpace(email)
+	return strings.ToLower(email)
 }
 
 // EmailRateLimitingKey is a slightly paranoid function that maps emails into string keys to use for rate limiting.
@@ -163,4 +183,8 @@ func keepOnlyLettersAndNumbers(r rune) rune {
 	} else {
 		return -1
 	}
+}
+
+func isWhitespaceOrComma(r rune) bool {
+	return r == ' ' || r == ','
 }

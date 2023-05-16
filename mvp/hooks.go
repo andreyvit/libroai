@@ -9,12 +9,16 @@ type Hooks struct {
 	closeApp     []func(app *App)
 	initRC       []func(app *App, rc *RC)
 	closeRC      []func(app *App, rc *RC)
+	initDB       []func(app *App, rc *RC)
+	resetAuth    []func(app *App, rc *RC)
+	postAuth     []func(app *App, rc *RC) error
 	helpers      []func(m template.FuncMap)
 	middleware   []func(r Router)
 	domainRoutes []func(app *App, b *DomainRouter)
 	siteRoutes   map[*Site][]func(b *RouteBuilder)
 	urlGenOption []func(app *App, g *URLGen, option string) bool
 	urlGen       []func(app *App, g *URLGen)
+	jwtTokenKey  []func(rc *RC, c *TokenDecoding) error
 }
 
 func (h *Hooks) InitApp(f func(app *App)) {
@@ -31,6 +35,18 @@ func (h *Hooks) InitRC(f func(app *App, rc *RC)) {
 
 func (h *Hooks) CloseRC(f func(app *App, rc *RC)) {
 	h.closeRC = append(h.closeRC, f)
+}
+
+func (h *Hooks) InitDB(f func(app *App, rc *RC)) {
+	h.initDB = append(h.initDB, f)
+}
+
+func (h *Hooks) ResetAuth(f func(app *App, rc *RC)) {
+	h.resetAuth = append(h.resetAuth, f)
+}
+
+func (h *Hooks) PostAuth(f func(app *App, rc *RC) error) {
+	h.postAuth = append(h.postAuth, f)
 }
 
 func (h *Hooks) Helpers(f func(m template.FuncMap)) {
@@ -52,12 +68,16 @@ func (h *Hooks) SiteRoutes(site *Site, f func(b *RouteBuilder)) {
 	h.siteRoutes[site] = append(h.siteRoutes[site], f)
 }
 
-func (h *Hooks) URLGenOption(site *Site, f func(app *App, g *URLGen, option string) bool) {
+func (h *Hooks) URLGenOption(f func(app *App, g *URLGen, option string) bool) {
 	h.urlGenOption = append(h.urlGenOption, f)
 }
 
-func (h *Hooks) URLGen(site *Site, f func(app *App, g *URLGen)) {
+func (h *Hooks) URLGen(f func(app *App, g *URLGen)) {
 	h.urlGen = append(h.urlGen, f)
+}
+
+func (h *Hooks) JWTTokenKey(f func(rc *RC, c *TokenDecoding) error) {
+	h.jwtTokenKey = append(h.jwtTokenKey, f)
 }
 
 func runHooksFwd1[T1 any](hooks []func(a1 T1), a1 T1) {
@@ -84,6 +104,16 @@ func runHooksRev2[T1, T2 any](hooks []func(a1 T1, a2 T2), a1 T1, a2 T2) {
 	}
 }
 
+func runHooksFwd2E[T1, T2 any](hooks []func(a1 T1, a2 T2) error, a1 T1, a2 T2) error {
+	for _, f := range hooks {
+		err := f(a1, a2)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func runHooksFwd3[T1, T2, T3 any](hooks []func(a1 T1, a2 T2, a3 T3), a1 T1, a2 T2, a3 T3) {
 	for _, f := range hooks {
 		f(a1, a2, a3)
@@ -103,4 +133,14 @@ func runHooksFwd3Or[T1, T2, T3 any](hooks []func(a1 T1, a2 T2, a3 T3) bool, a1 T
 		}
 	}
 	return false
+}
+
+func runHooksRevBltin2EUntil[T1, T2 any](hooks []func(a1 T1, a2 T2) error, bltin func(a1 T1, a2 T2) error, a1 T1, a2 T2, until *bool) error {
+	for i := len(hooks) - 1; i >= 0; i-- {
+		err := hooks[i](a1, a2)
+		if err != nil || *until {
+			return err
+		}
+	}
+	return bltin(a1, a2)
 }

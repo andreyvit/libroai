@@ -5,10 +5,13 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/andreyvit/buddyd/mvp/flake"
 	"github.com/andreyvit/edb"
 )
 
 func initAppDB(app *App, opt *AppOptions) {
+	app.gen = flake.NewGen(0, 0)
+
 	if app.Settings.DataDir == "" {
 		app.Settings.DataDir = must(os.MkdirTemp("", "testdb*"))
 	}
@@ -22,6 +25,10 @@ func initAppDB(app *App, opt *AppOptions) {
 
 func closeAppDB(app *App) {
 	app.db.Close()
+}
+
+func (app *App) NewID() flake.ID {
+	return app.gen.New()
 }
 
 func (app *App) InTx(rc *RC, writable bool, f func() error) error {

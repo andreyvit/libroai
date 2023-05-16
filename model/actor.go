@@ -1,6 +1,6 @@
 package m
 
-import "github.com/andreyvit/buddyd/internal/flake"
+import "github.com/andreyvit/buddyd/mvp/flake"
 
 type ActorRef struct {
 	ActorType ActorType `msgpack:"t"`

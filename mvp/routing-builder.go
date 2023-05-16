@@ -23,7 +23,7 @@ func (g *RouteBuilder) Raw() *bunrouter.Group {
 }
 
 // group defines a group of routes with a common prefix and/or middleware.
-func (g *RouteBuilder) Group(path string, f func(g *RouteBuilder)) {
+func (g *RouteBuilder) Group(path string, f func(b *RouteBuilder)) {
 	sg := RouteBuilder{
 		app:            g.app,
 		bg:             g.bg.NewGroup(path),

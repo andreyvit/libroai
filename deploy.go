@@ -11,7 +11,7 @@ import (
 )
 
 func preinstallConfigs(baseSettings *mvp.Settings) {
-	settings := mvp.As[Settings](baseSettings)
+	settings := fullSettings.From(baseSettings)
 
 	d.InstallDir(settings.Deployment.ServiceDir, 0755, d.Root)
 	u := d.NeedUser(settings.Deployment.User)
@@ -20,7 +20,7 @@ func preinstallConfigs(baseSettings *mvp.Settings) {
 }
 
 func install(baseSettings *mvp.Settings) {
-	settings := mvp.As[Settings](baseSettings)
+	settings := fullSettings.From(baseSettings)
 
 	u := d.NeedUser(settings.Deployment.User)
 	serv := settings.Deployment.Service
