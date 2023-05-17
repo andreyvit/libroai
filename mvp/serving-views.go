@@ -168,11 +168,19 @@ func (app *App) loadTemplates() (*template.Template, error) {
 		code := tmpl.code
 		code, _ = minicomponents.Rewrite(code, tmpl.name, comps)
 
-		if tmpl.kind == componentTempl {
-			code = "{{with .Args}}" + code + "{{end}}"
-		} else if tmpl.kind == pageTempl || tmpl.kind == partialTempl {
-			code = "{{with .Data}}" + code + "{{end}}"
+		var defines string
+		if i := strings.Index(code, "{{define"); i >= 0 {
+			code, defines = code[:i], code[i:]
 		}
+
+		if tmpl.kind == componentTempl {
+			code = "{{with .Args}}" + code + "{{end}}" + defines
+		} else if tmpl.kind == pageTempl || tmpl.kind == partialTempl {
+			code = "{{with .Data}}" + code + "{{end}}" + defines
+		} else {
+			code = code + defines
+		}
+
 		_, err = tmpl.tmpl.Parse(code)
 		if err != nil || strings.Contains(code, "{{error") {
 			log.Printf("Code of %s:\n==========\n%s\n==========", tmpl.name, code)

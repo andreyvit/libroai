@@ -1,0 +1,46 @@
+<nav class="flex flex-1 flex-col">
+  <ul role="list" class="flex flex-1 flex-col gap-y-7">
+    {{if $.IsActive "chat"}}
+    <c-nav-sidebar-group title="Chats">
+      <c-nav-sidebar-item title="Chat 1" route="admin.home" sempath="admin" />
+      <c-nav-sidebar-item title="Chat 2" route="mod.home" sempath="mod" />
+    </c-nav-sidebar-group>
+    {{else if $.IsActive "lib"}}
+    <c-nav-sidebar-group>
+      <c-nav-sidebar-item title="Library" letter="F" route="admin.home" sempath="admin" />
+      <c-nav-sidebar-item title="Lib Foo" icon="icons/navbar-dashboard.svg" route="mod.home" sempath="mod" />
+    </c-nav-sidebar-group>
+    {{else if $.IsActive "mod"}}
+    <c-nav-sidebar-group>
+      <c-nav-sidebar-item title="Mod Foo" letter="F" route="admin.home" sempath="admin" />
+      <c-nav-sidebar-item title="Mod Bar" icon="icons/navbar-dashboard.svg" route="mod.home" sempath="mod" />
+    </c-nav-sidebar-group>
+    {{else if $.IsActive "admin"}}
+    <c-nav-sidebar-group>
+      <c-nav-sidebar-item title="Foo" letter="F" route="admin.home" sempath="admin" />
+      <c-nav-sidebar-item title="Dashboard" icon="icons/navbar-dashboard.svg" route="mod.home" sempath="mod" />
+      <c-nav-sidebar-item title="Team" icon="icons/navbar-team.svg" route="chat.home" sempath="" />
+      <c-nav-sidebar-item title="Projects" letter="P" route="" sempath="" />
+      <c-nav-sidebar-item title="Calendar" letter="C" route="" sempath="" />
+      <c-nav-sidebar-item title="Documents" letter="D" route="" sempath="" />
+      <c-nav-sidebar-item title="Reports" letter="R" route="" sempath="" />
+    </c-nav-sidebar-group>
+    <c-nav-sidebar-group title="Your teams">
+      <c-nav-sidebar-item title="Heroicons" letter="H" route="" sempath="" />
+      <c-nav-sidebar-item title="Tailwind Labs" letter="T" route="" sempath="" />
+      <c-nav-sidebar-item title="Workcation" letter="W" route="" sempath="" />
+    </c-nav-sidebar-group>
+    {{else if $.IsActive "superadmin"}}
+    <c-nav-sidebar-group>
+      <c-nav-sidebar-item title="DB" letter="D" route="db.tables" sempath="superadmin/db" />
+    </c-nav-sidebar-group>
+    {{end}}
+    <!-- <li class="-mx-6 mt-auto">
+      <a href="#" class="flex items-center gap-x-4 px-6 py-3 text-sm font-semibold leading-6 text-gray-900 hover:bg-gray-50">
+        <img class="h-8 w-8 rounded-full bg-gray-50" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
+        <span class="sr-only">Your profile</span>
+        <span aria-hidden="true">Tom Cook</span>
+      </a>
+    </li> -->
+  </ul>
+</nav>

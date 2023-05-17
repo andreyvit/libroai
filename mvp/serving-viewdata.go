@@ -89,6 +89,22 @@ func (d *RenderData) PopString(name string) (string, bool) {
 	return v, found
 }
 
+func (d *RenderData) HTMLSafeString(name string) (template.HTML, bool) {
+	v, found := d.Value(name)
+	if found {
+		return htmlifyArg(v), true
+	}
+	return "", false
+}
+
+func (d *RenderData) PopHTMLSafeString(name string) (template.HTML, bool) {
+	v, found := d.HTMLSafeString(name)
+	if found {
+		delete(d.Args, name)
+	}
+	return v, found
+}
+
 func isPassThruArg(k string) bool {
 	return passThruArgs[k] || strings.HasPrefix(k, "data-")
 }
@@ -107,5 +123,18 @@ func stringifyArg(v any) string {
 		return v
 	default:
 		return fmt.Sprint(v)
+	}
+}
+
+func htmlifyArg(v any) template.HTML {
+	switch v := v.(type) {
+	case nil:
+		return ""
+	case string:
+		return template.HTML(template.HTMLEscapeString(v))
+	case template.HTML:
+		return v
+	default:
+		return template.HTML(template.HTMLEscapeString(fmt.Sprint(v)))
 	}
 }

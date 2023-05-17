@@ -10,6 +10,7 @@ import (
 func (app *App) registerBuiltinViewHelpers(m template.FuncMap) {
 	m["c_link"] = app.renderLink
 	m["c_svg"] = app.renderSVG
+	m["c_icon"] = app.renderSVG
 	m["attr"] = Attr
 	m["error"] = func(text string) template.HTML {
 		panic(fmt.Errorf("%s", text))
@@ -63,7 +64,7 @@ func (app *App) renderLink(data *RenderData) template.HTML {
 
 	href, _ := data.PopString("href")
 	routeName, _ := data.PopString("route")
-	bodyAttr, _ := data.PopString("body")
+	body, _ := data.PopHTMLSafeString("body")
 	classAttr, _ := data.PopString("class")
 	inactiveClassAttr, _ := data.PopString("inactive_class")
 	activeClassAttr, _ := data.PopString("active_class")
@@ -72,6 +73,7 @@ func (app *App) renderLink(data *RenderData) template.HTML {
 	}
 	sempathAttr, _ := data.PopString("sempath")
 	iconAttr, _ := data.PopString("icon")
+	iconClass, _ := data.PopString("icon_class")
 
 	var isActive, looksActive bool
 	if href != "" {
@@ -105,7 +107,7 @@ func (app *App) renderLink(data *RenderData) template.HTML {
 
 	var iconStr template.HTML
 	if iconAttr != "" {
-		iconStr = app.renderSVG(data.Bind(nil, "class", "icon", "src", iconAttr))
+		iconStr = app.renderSVG(data.Bind(nil, "class", JoinClasses("icon", iconClass), "src", iconAttr))
 		classes = append(classes, "with-icon")
 	}
 
@@ -128,44 +130,60 @@ func (app *App) renderLink(data *RenderData) template.HTML {
 	if len(classes) > 0 {
 		extraArgs.WriteString(string(Attr("class", JoinClassList(classes))))
 	}
+	if looksActive {
+		extraArgs.WriteString(` aria-current="page"`)
+	}
 
 	if isActive || href == "" {
-		return template.HTML(fmt.Sprintf(`<div%s>%s%s</div>`, extraArgs.String(), iconStr, template.HTMLEscapeString(bodyAttr)))
+		return template.HTML(fmt.Sprintf(`<div%s>%s%s</div>`, extraArgs.String(), iconStr, body))
 	} else {
-		return template.HTML(fmt.Sprintf(`<a href="%s"%s>%s%s</a>`, href, extraArgs.String(), iconStr, template.HTMLEscapeString(bodyAttr)))
+		return template.HTML(fmt.Sprintf(`<a href="%s"%s>%s%s</a>`, href, extraArgs.String(), iconStr, body))
 	}
 }
 
 func (app *App) renderSVG(data *RenderData) template.HTML {
 	var src string
+	var srcFound bool
 	var extraArgs strings.Builder
 	for k, v := range data.Args {
 		if k == "src" {
 			src = fmt.Sprint(v)
+			srcFound = true
 		} else {
 			extraArgs.WriteString(string(Attr(k, v)))
 		}
 	}
+	if !srcFound {
+		panic("<c-icon>: missing src attribute")
+	}
 	if src == "" {
-		panic("<c-svg>: missing src attribute")
+		return ""
 	}
 
-	raw, err := fs.ReadFile(data.App.StaticFS(), src)
+	var raw []byte
+	// if name, ok := strings.CutPrefix(src, bm.UploadedURIPrefix); ok {
+	// 	if !strings.HasSuffix(src, ".svg") {
+	// 		return "(non-SVG)"
+	// 	}
+	// 	var err error
+	// 	raw, err = app.ReadUploadedFile(name)
+	// 	if err != nil {
+	// 		log.Printf("missing uploaded file %q", name)
+	// 		return ""
+	// 	}
+	// } else {
+	var err error
+	raw, err = fs.ReadFile(app.staticFS, src)
 	if err != nil {
-		// var got []string
-		// ensure(fs.WalkDir(app.staticFS, ".", func(path string, d fs.DirEntry, err error) error {
-		// 	got = append(got, path)
-		// 	return nil
-		// }))
-		// panic(fmt.Errorf("<c-svg>: cannot find static/%s, have: %s", src, strings.Join(got, ", ")))
 		panic(fmt.Errorf("<c-svg>: cannot find %s under static/", src))
 	}
+	// }
 	body := string(raw)
 
 	if extraArgs.Len() > 0 {
 		i := strings.Index(body, "<svg ")
 		if i < 0 {
-			panic(fmt.Errorf("<c-svg>: static/%s: cannot find <svg> opening tag", src))
+			panic(fmt.Errorf("<c-icon>: %s: cannot find <svg> opening tag", src))
 		}
 
 		body = body[:i+4] + extraArgs.String() + body[i+4:]

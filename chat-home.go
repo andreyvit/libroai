@@ -10,6 +10,10 @@ func (app *App) showChatHome(rc *mvp.RC, in *struct{}) (*mvp.ViewData, error) {
 	wls := edb.All(edb.TableScan[m.Waitlister](rc, edb.FullScan()))
 	users := edb.All(edb.TableScan[m.User](rc, edb.FullScan()))
 
+	users = append(users, users...)
+	users = append(users, users...)
+	users = append(users, users...)
+
 	return &mvp.ViewData{
 		View:         "superadmin/home",
 		Title:        "Chat",

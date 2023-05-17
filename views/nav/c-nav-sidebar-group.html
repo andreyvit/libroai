@@ -1,0 +1,6 @@
+<li>
+  {{if .title}}<div class="text-xs font-semibold leading-6 text-gray-400">{{.title}}</div>{{end}}
+  <ul role="list" class="-mx-2 {{if .title}}mt-2{{end}} space-y-1">
+    {{.body}}
+  </ul>
+</li>

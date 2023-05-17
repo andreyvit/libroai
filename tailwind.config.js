@@ -85,6 +85,16 @@ module.exports = {
       },
       // measure: "60ch",
       extend: {
+        flexGrow: {
+          max: '999',
+        },
+        minWidth: {
+          '1/2': '50%',
+        },
+        aria: {
+          current: 'current',
+          'current-page': 'current="page"',
+        },
       }
     },
   },
