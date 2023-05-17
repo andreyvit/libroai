@@ -69,6 +69,13 @@ func requireAdmin(rc *RC) (any, error) {
 	return nil, nil
 }
 
+func requireLoggedIn(rc *RC) (any, error) {
+	if !rc.IsLoggedIn() {
+		return rc.App().Redirect(0, "signin"), nil
+	}
+	return nil, nil
+}
+
 // func (app *App) makeWebToken(sess *bm.Session, now time.Time) string {
 // 	account := fmt.Sprintf("%s-%s-%s", sess.ActorType.KeyString(), sess.ActorID.String(), sess.ID.String())
 // 	return app.webAdminTokens.SignAt(now, account)

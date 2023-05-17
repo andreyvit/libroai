@@ -26,7 +26,10 @@ func (app *App) showSignIn(rc *mvp.RC, in *struct {
 	CodeSent int    `json:"code_sent"`
 	EmailErr string `json:"email_err"`
 	CodeErr  string `json:"code_err"`
-}) (*mvp.ViewData, error) {
+}) (any, error) {
+	if rc.IsLoggedIn() {
+		return app.openApp(fullRC.From(rc))
+	}
 	var emailMsg, codeMsg *mvp.Msg
 	if in.EmailErr != "" {
 		emailMsg = mvp.FailureMsg(in.EmailErr)

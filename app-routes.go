@@ -15,22 +15,33 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 
 	b.Route("accountpicker", "GET /pick-account/", app.showPickAccountForm)
 
-	b.Route("chat.home", "GET /chat/", app.showChatHome)
+	b.Group("/chat", func(b *mvp.RouteBuilder) {
+		b.UseIn("authorize", fullRC.WrapAE(requireLoggedIn))
+
+		b.Route("chat.home", "GET /", app.showChatHome)
+	})
 
 	b.Group("/lib", func(b *mvp.RouteBuilder) {
+		b.UseIn("authorize", fullRC.WrapAE(requireAdmin))
+
 		b.Route("lib.home", "GET /", app.showLibraryHome)
 	})
 
 	b.Group("/mod", func(b *mvp.RouteBuilder) {
+		b.UseIn("authorize", fullRC.WrapAE(requireAdmin))
+
 		b.Route("mod.home", "GET /", app.showModerationHome)
 	})
 
 	b.Group("/admin", func(b *mvp.RouteBuilder) {
+		b.UseIn("authorize", fullRC.WrapAE(requireAdmin))
+
 		b.Route("admin.home", "GET /", app.showAdminHome)
 	})
 
 	b.Group("/superadmin", func(b *mvp.RouteBuilder) {
 		b.UseIn("authorize", fullRC.WrapAE(requireSuperadmin))
+
 		b.Route("superadmin.home", "GET /", app.showSuperadminHome)
 		// b.Route("superadmin.superadmins.save", "POST /superadmins/", app.saveSuperadmin)
 
