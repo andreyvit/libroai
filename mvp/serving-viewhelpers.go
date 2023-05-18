@@ -12,6 +12,16 @@ func (app *App) registerBuiltinViewHelpers(m template.FuncMap) {
 	m["c_svg"] = app.renderSVG
 	m["c_icon"] = app.renderSVG
 	m["attr"] = Attr
+	m["attrs"] = func(attrs any) template.HTMLAttr {
+		switch attrs := attrs.(type) {
+		case map[string]string:
+			return Attrs(attrs)
+		case map[string]any:
+			return AttrsAny(attrs)
+		default:
+			panic(fmt.Errorf("attrs: invalid value %T %v", attrs, attrs))
+		}
+	}
 	m["error"] = func(text string) template.HTML {
 		panic(fmt.Errorf("%s", text))
 	}
@@ -185,6 +195,7 @@ func (app *App) renderSVG(data *RenderData) template.HTML {
 		if i < 0 {
 			panic(fmt.Errorf("<c-icon>: %s: cannot find <svg> opening tag", src))
 		}
+		body = strings.Replace(body, ` xmlns="http://www.w3.org/2000/svg"`, ``, 1)
 
 		body = body[:i+4] + extraArgs.String() + body[i+4:]
 	}
@@ -203,4 +214,31 @@ func Attr(name string, value any) template.HTMLAttr {
 		return template.HTMLAttr(" " + name)
 	}
 	return template.HTMLAttr(" " + name + "=\"" + template.HTMLEscapeString(fmt.Sprint(value)) + "\"")
+}
+
+func Attrs(attrs map[string]string) template.HTMLAttr {
+	var buf strings.Builder
+	for k, v := range attrs {
+		buf.WriteByte(' ')
+		buf.WriteString(k)
+		buf.WriteString(`="`)
+		buf.WriteString(template.HTMLEscapeString(v))
+		buf.WriteByte('"')
+	}
+	return template.HTMLAttr(buf.String())
+}
+
+func AttrsAny(attrs map[string]any) template.HTMLAttr {
+	var buf strings.Builder
+	for k, v := range attrs {
+		if IsFalsy(v) {
+			continue
+		}
+		buf.WriteByte(' ')
+		buf.WriteString(k)
+		buf.WriteString(`="`)
+		buf.WriteString(string(HTMLify(v)))
+		buf.WriteByte('"')
+	}
+	return template.HTMLAttr(buf.String())
 }

@@ -13,7 +13,6 @@ type UserID = flake.ID
 type User struct {
 	ID          UserID            `msgpack:"-"`
 	Memberships []*UserMembership `msgpack:"a"`
-	Status      UserStatus        `msgpack:"s"`
 	Role        UserSystemRole    `msgpack:"r"`
 	Email       string            `msgpack:"e"`
 	EmailNorm   string            `msgpack:"e!"`
@@ -27,6 +26,9 @@ type UserMembership struct {
 	CreationTime time.Time       `msgpack:"@"`
 	AccountID    AccountID       `msgpack:"a"`
 	Role         UserAccountRole `msgpack:"r"`
+	Status       UserStatus      `msgpack:"t"`
+	Source       UserSource      `msgpack:"s,omitempty"`
+	Comment      UserSource      `msgpack:"c,omitempty"`
 }
 
 func (obj *User) FlakeID() flake.ID {
@@ -59,6 +61,13 @@ func (u *User) MembershipRole(accountID AccountID) UserAccountRole {
 // func (u *User) Check(perm Permission, accountID AccountID, obj mvpm.Object) error {
 // 	return CheckAccess(u, perm, accountID, obj)
 // }
+
+type UserSource int
+
+const (
+	UserSourceDefault   = UserSource(0)
+	UserSourceWhitelist = UserSource(1)
+)
 
 var (
 	ErrForbiddenNotSuperadmin = errors.New("Only superadmins can access this area.")

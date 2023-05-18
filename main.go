@@ -197,7 +197,6 @@ func ensureRootUser(app *App, rc *RC, email string, accountIDs []m.AccountID) *m
 			Name:      name,
 		}
 	}
-	user.Status = m.UserStatusActive
 	user.Role = m.UserSystemRoleSuperadmin
 	for _, aid := range accountIDs {
 		memb := user.Membership(aid)
@@ -205,10 +204,11 @@ func ensureRootUser(app *App, rc *RC, email string, accountIDs []m.AccountID) *m
 			memb = &m.UserMembership{
 				CreationTime: rc.Now,
 				AccountID:    aid,
-				Role:         m.UserAccountRoleAdmin,
 			}
 			user.Memberships = append(user.Memberships, memb)
 		}
+		memb.Role = m.UserAccountRoleAdmin
+		memb.Status = m.UserStatusActive
 	}
 	edb.Put(rc, user) // nop if unchanged
 	return user

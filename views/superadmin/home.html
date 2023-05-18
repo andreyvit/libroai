@@ -19,7 +19,15 @@
             <div>{{.ID}}</div>
         </div>
         <div class="">{{.Role}}</div>
-        <div class="">{{.Status}}</div>
+        <div class="">
+            {{range .Memberships}}
+            <div class="User__membership">
+                <div class="User__membership_id">@{{.AccountID}}</div>
+                <div class="User__membership_status">{{.Status}}</div>
+                <div class="User__membership_role">{{.Role}}</div>
+            </div>
+            {{end}}
+        </div>
     {{end}}
     </div>
 

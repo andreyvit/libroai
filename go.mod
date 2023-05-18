@@ -8,7 +8,7 @@ require (
 	github.com/andreyvit/httpform v0.1.5 // indirect
 	github.com/andreyvit/httpserver v0.0.0-20230318205843-f3fda2b554b5 // indirect
 	github.com/andreyvit/jsonfix v1.0.0 // indirect
-	github.com/andreyvit/minicomponents v0.3.1 // indirect
+	github.com/andreyvit/minicomponents v0.3.2 // indirect
 	github.com/andreyvit/openai v0.0.0-20230318101313-1a42ea08c3f4 // indirect
 	github.com/andreyvit/plainsecrets v0.1.2 // indirect
 	github.com/uptrace/bunrouter v1.0.20 // indirect

@@ -37,6 +37,8 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 		b.UseIn("authorize", fullRC.WrapAE(requireAdmin))
 
 		b.Route("admin.home", "GET /", app.showAdminHome)
+		b.Route("admin.whitelist", "GET /whitelist/", app.handleAdminWhitelist)
+		b.Route("admin.whitelist.save", "POST /whitelist/", app.handleAdminWhitelist)
 	})
 
 	b.Group("/superadmin", func(b *mvp.RouteBuilder) {

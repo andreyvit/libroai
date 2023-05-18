@@ -76,7 +76,7 @@ func (d *RenderData) Value(name string) (any, bool) {
 func (d *RenderData) String(name string) (string, bool) {
 	v, found := d.Value(name)
 	if found {
-		return stringifyArg(v), true
+		return Stringify(v), true
 	}
 	return "", false
 }
@@ -92,7 +92,7 @@ func (d *RenderData) PopString(name string) (string, bool) {
 func (d *RenderData) HTMLSafeString(name string) (template.HTML, bool) {
 	v, found := d.Value(name)
 	if found {
-		return htmlifyArg(v), true
+		return HTMLify(v), true
 	}
 	return "", false
 }
@@ -113,28 +113,4 @@ var passThruArgs = map[string]bool{
 	"id":     true,
 	"target": true,
 	"rel":    true,
-}
-
-func stringifyArg(v any) string {
-	switch v := v.(type) {
-	case nil:
-		return ""
-	case string:
-		return v
-	default:
-		return fmt.Sprint(v)
-	}
-}
-
-func htmlifyArg(v any) template.HTML {
-	switch v := v.(type) {
-	case nil:
-		return ""
-	case string:
-		return template.HTML(template.HTMLEscapeString(v))
-	case template.HTML:
-		return v
-	default:
-		return template.HTML(template.HTMLEscapeString(fmt.Sprint(v)))
-	}
 }

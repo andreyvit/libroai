@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -25,15 +26,19 @@ const (
 
 func (app *App) EvalTemplate(templateName string, data any) (template.HTML, error) {
 	var buf strings.Builder
-	t := app.templates
-	if app.Settings.ServeAssetsFromDisk {
-		t = app.templatesDev.Load().(*template.Template)
-	}
-	err := t.ExecuteTemplate(&buf, templateName, data)
+	err := app.ExecTemplate(&buf, templateName, data)
 	if err != nil {
 		return "", err
 	}
 	return template.HTML(buf.String()), nil
+}
+
+func (app *App) ExecTemplate(w io.Writer, templateName string, data any) error {
+	t := app.templates
+	if app.Settings.ServeAssetsFromDisk {
+		t = app.templatesDev.Load().(*template.Template)
+	}
+	return t.ExecuteTemplate(w, templateName, data)
 }
 
 func (app *App) Render(lc flogger.Context, data *ViewData) ([]byte, error) {
@@ -95,6 +100,9 @@ func initViews(app *App, opt *AppOptions) {
 	app.templates, err = app.loadTemplates()
 	if err != nil {
 		log.Fatalf("failed to load templates: %v", err)
+	}
+	if app.Settings.ServeAssetsFromDisk {
+		app.templatesDev.Store(app.templates)
 	}
 }
 

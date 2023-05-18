@@ -10,19 +10,29 @@ import (
 type UserStatus int
 
 const (
-	UserStatusUnknown  = UserStatus(0)
-	UserStatusActive   = UserStatus(1)
-	UserStatusInactive = UserStatus(2)
-	UserStatusBanned   = UserStatus(3)
-	UserStatusInvited  = UserStatus(4)
+	UserStatusUnknown      = UserStatus(0)
+	UserStatusActive       = UserStatus(1)
+	UserStatusInactive     = UserStatus(2)
+	UserStatusBanned       = UserStatus(3)
+	UserStatusInvited      = UserStatus(4)
+	UserStatusSelfRejected = UserStatus(5)
 )
 
 var _userStatusStrings = []string{
 	"unknown",
 	"active",
-	"banned",
 	"inactive",
+	"banned",
 	"invited",
+	"selfrejected",
+}
+
+func (v UserStatus) Invitable() bool {
+	return v == UserStatusUnknown || v == UserStatusInactive || v == UserStatusBanned
+}
+
+func (v UserStatus) ActiveOrInvited() bool {
+	return v == UserStatusActive || v == UserStatusInvited
 }
 
 func (v UserStatus) String() string {

@@ -33,9 +33,7 @@ func (app *App) writeResponse(rc *RC, output any, route *Route, w http.ResponseW
 			output.View = strings.ReplaceAll(route.routeName, ".", "-")
 		}
 		output.Route = route
-		// output.SiteData = app.siteData
-		output.App = app
-		output.RC = rc
+		app.fillViewData(output, rc)
 		b, err := app.Render(rc, output)
 		if err != nil {
 			return err
@@ -59,4 +57,9 @@ func (app *App) writeResponse(rc *RC, output any, route *Route, w http.ResponseW
 		panic(fmt.Errorf("%s: invalid return value %T %v", route.desc, output, output))
 	}
 	return nil
+}
+
+func (app *App) fillViewData(output *ViewData, rc *RC) {
+	output.RC = rc
+	output.App = app
 }

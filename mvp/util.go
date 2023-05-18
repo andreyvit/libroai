@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"html/template"
 	"io"
 	"io/fs"
 	"mime"
@@ -245,4 +246,30 @@ func AddSingleClass(classes []string, item string) []string {
 		}
 	}
 	return classes
+}
+
+func Stringify(v any) string {
+	switch v := v.(type) {
+	case nil:
+		return ""
+	case string:
+		return v
+	case template.HTML:
+		return string(v)
+	default:
+		return fmt.Sprint(v)
+	}
+}
+
+func HTMLify(v any) template.HTML {
+	switch v := v.(type) {
+	case nil:
+		return ""
+	case string:
+		return template.HTML(template.HTMLEscapeString(v))
+	case template.HTML:
+		return v
+	default:
+		return template.HTML(template.HTMLEscapeString(fmt.Sprint(v)))
+	}
 }

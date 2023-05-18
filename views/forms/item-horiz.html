@@ -1,0 +1,14 @@
+<div class="sm:grid sm:grid-cols-[1fr_2fr] sm:items-center gap-y-2 sm:gap-x-4 {{.ItemTag.Class}}">
+    <label for="{{.ID}}" class="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5 {{.LabelTag.Class}}">{{.Label}}</label>
+    {{.InnerHTML}}
+    {{if .ExtraHTML}}
+    <div> </div>
+    <div class="">{{.ExtraHTML}}</div>
+    {{end}}
+    {{if .Error}}
+    <div> </div>
+    <p class="FieldError mt-2 text-sm text-red-600">
+      {{.Error}}
+    </p>
+    {{end}}
+</div>
