@@ -14,9 +14,10 @@ type ViewData struct {
 	SemanticPath string
 
 	*SiteData
-	Route *Route
-	App   *App
-	RC    *RC
+	Route  *Route
+	App    *App
+	RC     any
+	baseRC *RC
 
 	// Content is only populated in layouts and contains the rendered content of the page
 	Content template.HTML
@@ -33,6 +34,10 @@ func (vd *ViewData) IsActive(path string) bool {
 	return vd.SemanticPath == path || strings.HasPrefix(vd.SemanticPath, path+"/")
 }
 
+func (vd *ViewData) BaseRC() *RC {
+	return vd.baseRC
+}
+
 type SiteData struct {
 	AppName string
 }
@@ -41,6 +46,20 @@ type RenderData struct {
 	Data any
 	Args map[string]any
 	*ViewData
+}
+
+func (d *RenderData) ArgsByPrefix(prefix string) map[string]any {
+	prefix = prefix + "_"
+	var result map[string]any
+	for k, v := range d.Args {
+		if ck, ok := strings.CutPrefix(k, prefix); ok {
+			if result == nil {
+				result = make(map[string]any)
+			}
+			result[ck] = v
+		}
+	}
+	return result
 }
 
 func (d *RenderData) Bind(value any, args ...any) *RenderData {
@@ -99,6 +118,29 @@ func (d *RenderData) HTMLSafeString(name string) (template.HTML, bool) {
 
 func (d *RenderData) PopHTMLSafeString(name string) (template.HTML, bool) {
 	v, found := d.HTMLSafeString(name)
+	if found {
+		delete(d.Args, name)
+	}
+	return v, found
+}
+
+func (d *RenderData) MapSA(name string) (map[string]any, bool) {
+	v, found := d.Value(name)
+	if found {
+		if v == nil {
+			return nil, true
+		}
+		if result, ok := v.(map[string]any); ok {
+			return result, true
+		} else {
+			panic(fmt.Errorf("value of arg %q is %T %v, wanted map[string]any", name, v, v))
+		}
+	}
+	return nil, false
+}
+
+func (d *RenderData) PopMapSA(name string) (map[string]any, bool) {
+	v, found := d.MapSA(name)
 	if found {
 		delete(d.Args, name)
 	}

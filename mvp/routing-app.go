@@ -90,7 +90,7 @@ func (app *App) callRoute(route *Route, rc *RC, w http.ResponseWriter, req bunro
 		}
 
 		inputs := make([]reflect.Value, route.funcVal.Type().NumIn())
-		inputs[0] = reflect.ValueOf(rc)
+		inputs[0] = reflect.ValueOf(route.rcFacet.AnyFrom(rc))
 		inputs[1] = inVal
 
 		results := route.funcVal.Call(inputs)

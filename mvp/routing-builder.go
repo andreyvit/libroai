@@ -63,9 +63,14 @@ func (g *RouteBuilder) Route(routeName string, methodAndPath string, f any, opti
 	if ft.NumOut() != 2 || ft.Out(1) != errorType {
 		panic(fmt.Errorf(`%s: got %v, wanted a function returning (something, error)`, desc, ft))
 	}
-	if ft.NumIn() != 2 || ft.In(0) != rcPtrType || ft.In(1).Kind() != reflect.Ptr || ft.In(1).Elem().Kind() != reflect.Struct {
+	if ft.NumIn() != 2 || ft.In(0).Kind() != reflect.Ptr || ft.In(1).Kind() != reflect.Ptr || ft.In(1).Elem().Kind() != reflect.Struct {
 		panic(fmt.Errorf(`%s: got %v, wanted a function accepting (*RC, *SomeStruct)`, desc, ft))
 	}
+	rcFacet := BaseRC.FacetByPtrType(ft.In(0))
+	if rcFacet == nil {
+		panic(fmt.Errorf(`%s: got %v, wanted a function accepting (*RC, *SomeStruct), where RC is any of RC facets`, desc, ft))
+	}
+
 	// inTypPtr := ft.In(1)
 	inTyp := ft.In(1).Elem()
 
@@ -75,6 +80,7 @@ func (g *RouteBuilder) Route(routeName string, methodAndPath string, f any, opti
 		method:         method,
 		path:           g.path + path,
 		funcVal:        fv,
+		rcFacet:        rcFacet,
 		inType:         inTyp,
 		idempotent:     mi.Idempotent,
 		routingContext: g.routingContext.clone(),

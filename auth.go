@@ -51,7 +51,7 @@ func loadSessionAndUser(app *App, rc *RC) error {
 
 func requireSuperadmin(rc *RC) (any, error) {
 	if !rc.IsLoggedIn() {
-		return rc.App().Redirect(0, "signin"), nil
+		return rc.App().Redirect("signin"), nil
 	}
 	if err := rc.Check(m.PermissionAccessSuperadminArea, nil); err != nil {
 		return nil, mvp.ErrForbidden.Wrap(err)
@@ -61,7 +61,7 @@ func requireSuperadmin(rc *RC) (any, error) {
 
 func requireAdmin(rc *RC) (any, error) {
 	if !rc.IsLoggedIn() {
-		return rc.App().Redirect(0, "signin"), nil
+		return rc.App().Redirect("signin"), nil
 	}
 	if err := rc.Check(m.PermissionAccessAdminArea, nil); err != nil {
 		return nil, mvp.ErrForbidden.Wrap(err)
@@ -71,7 +71,7 @@ func requireAdmin(rc *RC) (any, error) {
 
 func requireLoggedIn(rc *RC) (any, error) {
 	if !rc.IsLoggedIn() {
-		return rc.App().Redirect(0, "signin"), nil
+		return rc.App().Redirect("signin"), nil
 	}
 	return nil, nil
 }

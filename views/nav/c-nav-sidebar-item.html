@@ -1,5 +1,5 @@
  <li>
-  <c-link class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold cursor-pointer {{.class}}" active-class="bg-gray-50 text-indigo-600" inactive-class="text-gray-700 hover:text-indigo-600 hover:bg-gray-50" route={{.route}} sempath={{.sempath}}>
+  <c-link class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold cursor-pointer {{.class}}" active-class="bg-gray-50 text-indigo-600" inactive-class="text-gray-700 hover:text-indigo-600 hover:bg-gray-50" route={{.route}} sempath={{.sempath}} path-params={{$.ArgsByPrefix "path"}} >
     {{if .icon -}}
     <c-icon src={{.icon}} class="h-6 w-6 shrink-0 text-gray-400 group-hover:text-indigo-600 group-aria-[current]:text-indigo-600" aria-hidden="true" />
     {{- else if .letter -}}

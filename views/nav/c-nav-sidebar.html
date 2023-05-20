@@ -1,9 +1,11 @@
 <nav class="flex flex-1 flex-col">
   <ul role="list" class="flex flex-1 flex-col gap-y-7">
     {{if $.IsActive "chat"}}
+    <c-nav-sidebar-item title="New Chat" route="chat.home" sempath="chat/c/0" />
     <c-nav-sidebar-group title="Chats">
-      <c-nav-sidebar-item title="Chat 1" route="admin.home" sempath="admin" />
-      <c-nav-sidebar-item title="Chat 2" route="mod.home" sempath="mod" />
+      {{range $.RC.Chats}}
+        <c-nav-sidebar-item title="{{.ID}}" route="chat.view" path-chat={{.ID}} sempath="chat/c/{{.ID}}" />
+      {{end}}
     </c-nav-sidebar-group>
     {{else if $.IsActive "lib"}}
     <c-nav-sidebar-group>

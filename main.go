@@ -112,6 +112,8 @@ type RC struct {
 	User         *m.User
 	OriginalUser *m.User
 	Account      *m.Account
+
+	Chats []*m.Chat
 }
 
 func (rc *RC) AccountID() m.AccountID {
@@ -119,6 +121,13 @@ func (rc *RC) AccountID() m.AccountID {
 		return 0
 	}
 	return rc.Account.ID
+}
+
+func (rc *RC) UserID() m.AccountID {
+	if rc.User == nil {
+		return 0
+	}
+	return rc.User.ID
 }
 
 func (rc *RC) Check(perm m.Permission, obj mvpm.Object) error {

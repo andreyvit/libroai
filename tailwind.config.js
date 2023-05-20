@@ -4,7 +4,8 @@ module.exports = {
     'views/*.html',
     'views/*/*.html',
     'static/*.html',
-    '*.go'
+    '*.go',
+    '*/*.go'
   ],
   theme: {
     theme: {

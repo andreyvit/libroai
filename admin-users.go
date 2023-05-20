@@ -113,7 +113,7 @@ func (app *App) handleAdminWhitelist(rc *mvp.RC, in *struct {
 				edb.Put(rc, u)
 			}
 		}
-		return rc.Redirect(0, "admin.whitelist"), nil
+		return rc.Redirect("admin.whitelist"), nil
 	}
 
 	return &mvp.ViewData{

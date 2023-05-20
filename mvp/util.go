@@ -164,6 +164,21 @@ func CanonicalEmail(email string) string {
 	return strings.ToLower(email)
 }
 
+// CanonicalPhone returns an phone number suitable for unique checks.
+func CanonicalPhone(number string) string {
+	return strings.Map(cleanupPhoneRune, number)
+}
+
+func cleanupPhoneRune(r rune) rune {
+	if r >= '0' && r <= '9' {
+		return r
+	} else if r == '+' {
+		return r
+	} else {
+		return -1
+	}
+}
+
 // EmailRateLimitingKey is a slightly paranoid function that maps emails into string keys to use for rate limiting.
 func EmailRateLimitingKey(email string) string {
 	username, host, found := strings.Cut(email, "@")

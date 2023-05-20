@@ -58,4 +58,19 @@ var (
 	})
 	SessionsByActor   = edb.AddIndex[flake.ID]("by_actor")
 	SessionsByAccount = edb.AddIndex[flake.ID]("by_account")
+
+	Chats = edb.AddTable(schema, "chats", 1, func(row *m.Chat, ib *edb.IndexBuilder) {
+		ib.Add(ChatsByAccount, row.AccountID)
+		ib.Add(ChatsByUser, row.UserID)
+	}, func(tx *edb.Tx, row *m.Chat, oldVer uint64) {
+	}, []*edb.Index{
+		ChatsByUser,
+		ChatsByAccount,
+	})
+	ChatsByAccount = edb.AddIndex[m.AccountID]("by_account")
+	ChatsByUser    = edb.AddIndex[m.UserID]("by_user")
+
+	ChatContent = edb.AddTable(schema, "chat_content", 1, func(row *m.ChatContent, ib *edb.IndexBuilder) {
+	}, func(tx *edb.Tx, row *m.ChatContent, oldVer uint64) {
+	}, []*edb.Index{})
 )

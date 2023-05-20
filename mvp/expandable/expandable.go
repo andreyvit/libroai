@@ -21,8 +21,12 @@ func NewSchema(name string) *Schema {
 
 type Any[B any] interface {
 	String() string
+	Base() *Base[B]
+	Type() reflect.Type
+	PtrType() reflect.Type
 	newThis() *B
-	asThis(base *B) any
+	AnyFrom(base *B) any
+	thisAnyToBase(drvd any) *B
 }
 
 type Base[B any] struct {
@@ -30,16 +34,19 @@ type Base[B any] struct {
 	schema *Schema
 	name   string
 	typ    reflect.Type
+	ptrTyp reflect.Type
 	new    func() *B
 	full   Any[B]
 }
 
 func NewBase[B any](schema *Schema, name string) *Base[B] {
+	ptrTyp := reflect.TypeOf((*B)(nil))
 	t := &Base[B]{
 		index:  nextBaseIndex,
 		schema: schema,
 		name:   name,
-		typ:    reflect.TypeOf((*B)(nil)).Elem(),
+		ptrTyp: ptrTyp,
+		typ:    ptrTyp.Elem(),
 	}
 	t.full = t
 	nextBaseIndex++
@@ -50,16 +57,36 @@ func (t *Base[B]) WithNew(f func() *B) *Base[B] {
 	return t
 }
 
+func (t *Base[B]) FacetByPtrType(typ reflect.Type) Any[B] {
+	if t.ptrTyp == typ {
+		return t
+	}
+	if t.full.PtrType() == typ {
+		return t.full
+	}
+	return nil
+}
+
 func (t *Base[B]) String() string {
 	return t.schema.name + "." + t.name
+}
+
+func (t *Base[B]) Base() *Base[B] {
+	return t
+}
+func (t *Base[B]) Type() reflect.Type {
+	return t.typ
+}
+func (t *Base[B]) PtrType() reflect.Type {
+	return t.ptrTyp
 }
 
 func (t *Base[B]) New() *B {
 	return t.full.newThis()
 }
 
-func (t *Base[B]) Full(base *B) any {
-	return t.full.asThis(base)
+func (t *Base[B]) AnyFull(base *B) any {
+	return t.full.AnyFrom(base)
 }
 
 func (t *Base[B]) newThis() *B {
@@ -70,8 +97,11 @@ func (t *Base[B]) newThis() *B {
 	}
 }
 
-func (t *Base[B]) asThis(base *B) any {
+func (t *Base[B]) AnyFrom(base *B) any {
 	return base
+}
+func (t *Base[B]) thisAnyToBase(drvd any) *B {
+	return drvd.(*B)
 }
 
 func (t *Base[B]) addDerived(d Any[B]) {
@@ -84,14 +114,17 @@ func (t *Base[B]) addDerived(d Any[B]) {
 type Derived[T, B any] struct {
 	schema *Schema
 	typ    reflect.Type
+	ptrTyp reflect.Type
 	base   *Base[B]
 	new    func() *T
 }
 
 func Derive[T, B any](schema *Schema, base *Base[B]) *Derived[T, B] {
+	ptrTyp := reflect.TypeOf((*T)(nil))
 	t := &Derived[T, B]{
 		schema: schema,
-		typ:    reflect.TypeOf((*T)(nil)).Elem(),
+		ptrTyp: ptrTyp,
+		typ:    ptrTyp.Elem(),
 		base:   base,
 	}
 	base.addDerived(t)
@@ -106,20 +139,33 @@ func (t *Derived[T, B]) String() string {
 	return t.schema.name + "." + t.base.name
 }
 
+func (t *Derived[T, B]) Base() *Base[B] {
+	return t.base
+}
+func (t *Derived[T, B]) Type() reflect.Type {
+	return t.typ
+}
+func (t *Derived[T, B]) PtrType() reflect.Type {
+	return t.ptrTyp
+}
+
 func (t *Derived[T, B]) newThis() *B {
 	if t.new != nil {
-		return t.Base(t.new())
+		return t.ToBase(t.new())
 	} else {
-		return t.Base(reflect.New(t.typ).Interface().(*T))
+		return t.ToBase(reflect.New(t.typ).Interface().(*T))
 	}
 }
 func (t *Derived[T, B]) From(base *B) *T {
 	return (*T)(unsafe.Pointer(base))
 }
-func (t *Derived[T, B]) Base(drvd *T) *B {
+func (t *Derived[T, B]) thisAnyToBase(drvd any) *B {
+	return t.ToBase(drvd.(*T))
+}
+func (t *Derived[T, B]) ToBase(drvd *T) *B {
 	return (*B)(unsafe.Pointer(drvd))
 }
-func (t *Derived[T, B]) asThis(base *B) any {
+func (t *Derived[T, B]) AnyFrom(base *B) any {
 	return t.From(base)
 }
 func (t *Derived[T, B]) Wrap(f func(*T)) func(*B) {

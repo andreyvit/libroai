@@ -1888,10 +1888,6 @@ select {
   justify-content: space-between;
 }
 
-.justify-around {
-  justify-content: space-around;
-}
-
 .justify-items-start {
   justify-items: start;
 }

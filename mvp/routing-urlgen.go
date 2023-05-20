@@ -10,6 +10,8 @@ type URLGenOption int
 
 const Absolute = URLGenOption(1)
 
+type PathParamsMapAny map[string]any
+
 // URL generates a relative (default) or absolute URL based on a named route.
 // Supply map[string]string or pairs of (key string, value string) arguments
 // to supply path parameters for the route.
@@ -31,6 +33,16 @@ func (app *App) URL(name string, extras ...any) string {
 				for k, v := range extra {
 					g.PathKeys[k] = v
 				}
+			}
+		case PathParamsMapAny:
+			if g.PathKeys == nil {
+				g.PathKeys = make(map[string]string)
+			}
+			for k, v := range extra {
+				if v == nil {
+					continue
+				}
+				g.PathKeys[k] = fmt.Sprint(v)
 			}
 		case url.Values:
 			if g.QueryParams == nil {
@@ -117,11 +129,10 @@ type URLGen struct {
 // to supply path parameters for the route.
 // Supply url.Values to add query parameters.
 // Supply Absolute flag to use an absolute URL.
-func (app *App) Redirect(statusCode int, name string, extras ...any) *Redirect {
+func (app *App) Redirect(name string, extras ...any) *Redirect {
 	path := app.URL(name, extras...)
 	return &Redirect{
-		Path:   path,
-		Status: statusCode,
+		Path: path,
 	}
 }
 
@@ -130,7 +141,7 @@ func (rc *RC) DefaultPathParams() map[string]string {
 	return nil
 }
 
-func (rc *RC) Redirect(statusCode int, name string, extras ...any) *Redirect {
+func (rc *RC) Redirect(name string, extras ...any) *Redirect {
 	dflts := rc.DefaultPathParams()
 	if extras == nil {
 		extras = []any{dflts}
@@ -140,5 +151,5 @@ func (rc *RC) Redirect(statusCode int, name string, extras ...any) *Redirect {
 		e = append(e, extras...)
 		extras = e
 	}
-	return rc.app.Redirect(statusCode, name, extras...)
+	return rc.app.Redirect(name, extras...)
 }

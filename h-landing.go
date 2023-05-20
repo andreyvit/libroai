@@ -47,7 +47,7 @@ func (app *App) handleLandingSignup(rc *mvp.RC, in *struct {
 		Category: "signupform",
 	})
 
-	return app.Redirect(0, "landing.waitlist"), nil
+	return app.Redirect("landing.waitlist"), nil
 }
 
 func runTemplate(code string, values map[string]any) string {

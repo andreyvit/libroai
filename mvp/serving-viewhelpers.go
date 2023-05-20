@@ -53,15 +53,27 @@ func (app *App) registerBuiltinViewHelpers(m template.FuncMap) {
 	m["pick"] = func(i int, values ...any) any {
 		return values[i%len(values)]
 	}
-	m["picks"] = func(s string, values ...any) any {
-		for i := 0; i < len(values)-1; i += 2 {
-			if i+1 >= len(values) {
+	m["switch"] = func(actual any, items ...any) any {
+		for i := 0; i < len(items)-1; i += 2 {
+			if i+1 >= len(items) {
 				// "else" clause
-				return values[i]
+				return items[i]
 			}
-			key := fmt.Sprint(values[i])
-			if key == s {
-				return values[i+1]
+			if items[i] == actual {
+				return items[i+1]
+			}
+		}
+		return nil
+	}
+	m["switchstr"] = func(actual any, items ...any) any {
+		actualStr := fmt.Sprint(actual)
+		for i := 0; i < len(items)-1; i += 2 {
+			if i+1 >= len(items) {
+				// "else" clause
+				return items[i]
+			}
+			if fmt.Sprint(items[i]) == actualStr {
+				return items[i+1]
 			}
 		}
 		return nil
@@ -84,6 +96,7 @@ func (app *App) renderLink(data *RenderData) template.HTML {
 	sempathAttr, _ := data.PopString("sempath")
 	iconAttr, _ := data.PopString("icon")
 	iconClass, _ := data.PopString("icon_class")
+	pathParams, _ := data.PopMapSA("path_params")
 
 	var isActive, looksActive bool
 	if href != "" {
@@ -102,6 +115,8 @@ func (app *App) renderLink(data *RenderData) template.HTML {
 			v, found := data.PopString(k)
 			if found {
 				params[k] = v
+			} else if ppv, found := pathParams[k]; found {
+				params[k] = fmt.Sprint(ppv)
 			} else if _, found = params[k]; !found {
 				panic(fmt.Errorf("route %s requires path param %s", routeName, k))
 			}
@@ -112,6 +127,10 @@ func (app *App) renderLink(data *RenderData) template.HTML {
 		looksActive = isActive
 		if sempathAttr != "" {
 			looksActive = data.IsActive(sempathAttr)
+			if !looksActive {
+				// isActive is based on route name, but sempath might compare actual instances
+				isActive = false
+			}
 		}
 	}
 

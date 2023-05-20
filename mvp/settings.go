@@ -81,7 +81,8 @@ type Settings struct {
 	MaxRateLimitRequestDelay jsonext.Duration
 	AppBehaviors
 
-	DataDir string
+	DataDir   string
+	VerboseDB bool
 
 	Postmark                     postmark.Credentials
 	PostmarkDefaultMessageStream string
@@ -155,7 +156,7 @@ func (secrets Secrets) RequiredNamedKeySet(name string, keys *mvpm.NamedKeySet, 
 func LoadConfig(ge *Configuration, env string, installHook func(*Settings)) *Settings {
 	settings := BaseSettings.New()
 	settings.Env = env
-	full := BaseSettings.Full(settings)
+	full := BaseSettings.AnyFull(settings)
 
 	configBySection := make(map[string]json.RawMessage)
 
@@ -171,7 +172,7 @@ func LoadConfig(ge *Configuration, env string, installHook func(*Settings)) *Set
 			parseConfigSections(ge, ge.Envs[e], configBySection, full)
 		} else {
 			// parse all other sections to ensure we're not surprised after deployment
-			dummy := BaseSettings.Full(BaseSettings.New())
+			dummy := BaseSettings.AnyFull(BaseSettings.New())
 			parseConfigSections(ge, ge.Envs[e], configBySection, dummy)
 		}
 	}

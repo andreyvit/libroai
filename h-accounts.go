@@ -86,7 +86,7 @@ func (app *App) handleSignIn(rc *mvp.RC, in *struct {
 	Resend   bool   `json:"resend"`
 }) (any, error) {
 	if in.Email == "" {
-		return app.Redirect(0, "signin", url.Values{
+		return app.Redirect("signin", url.Values{
 			"email":     {in.Email},
 			"email_err": {"Email is required."},
 		}), nil
@@ -146,7 +146,7 @@ func (app *App) handleSignIn(rc *mvp.RC, in *struct {
 			Category: "signin",
 		})
 	}
-	return app.Redirect(0, "signin", url.Values{
+	return app.Redirect("signin", url.Values{
 		"email":     {in.Email},
 		"code_sent": {strconv.Itoa(sent)},
 		"code_err":  {codeErr},
@@ -173,14 +173,14 @@ func (app *App) finishSignIn(rc *mvp.RC, email string) (any, error) {
 		edb.Put(rc, wl)
 	}
 	app.startSession(rc, wl)
-	return app.Redirect(0, "landing.waitlist"), nil
+	return app.Redirect("landing.waitlist"), nil
 }
 
 func (app *App) openApp(rc *RC) (*mvp.Redirect, error) {
 	if rc.Can(m.PermissionManageAccount, nil) {
-		return rc.Redirect(0, "admin.home"), nil
+		return rc.Redirect("admin.home"), nil
 	} else {
-		return rc.Redirect(0, "chat.home"), nil
+		return rc.Redirect("chat.home"), nil
 	}
 }
 

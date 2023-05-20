@@ -16,6 +16,8 @@ const (
 
 	PermissionAccessAdminArea
 	PermissionManageAccount
+
+	PermissionAccessChat
 )
 
 var _permissionStrings = []string{
@@ -26,6 +28,8 @@ var _permissionStrings = []string{
 
 	"access-admin-area",
 	"manage-admins",
+
+	"access-chat",
 }
 
 func (v Permission) String() string {

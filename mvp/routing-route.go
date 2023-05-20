@@ -1,6 +1,10 @@
 package mvp
 
-import "reflect"
+import (
+	"reflect"
+
+	"github.com/andreyvit/buddyd/mvp/expandable"
+)
 
 type Route struct {
 	desc       string
@@ -8,6 +12,7 @@ type Route struct {
 	method     string
 	path       string
 	funcVal    reflect.Value
+	rcFacet    expandable.Any[RC]
 	inType     reflect.Type
 	idempotent bool
 	pathParams []string

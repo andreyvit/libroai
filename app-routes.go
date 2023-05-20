@@ -17,8 +17,12 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 
 	b.Group("/chat", func(b *mvp.RouteBuilder) {
 		b.UseIn("authorize", fullRC.WrapAE(requireLoggedIn))
+		b.Use(fullRC.WrapAE(loadUserChatListMiddleware))
 
-		b.Route("chat.home", "GET /", app.showChatHome)
+		b.Route("chat.home", "GET /", app.showNewChat)
+		b.Route("chat.view", "GET /c/:chat", app.showChat)
+		b.Route("chat.messages.send", "POST /c/:chat/send", app.sendChatMessage)
+		b.Route("chat.messages.vote", "POST /c/:chat/vote", app.voteChatResponse)
 	})
 
 	b.Group("/lib", func(b *mvp.RouteBuilder) {
@@ -54,7 +58,7 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 			b.Route("db.table.save", "POST /:table/rows/:key", app.handleSuperadminTableRowForm)
 
 			// b.Route("superadmin.db.dump.simple", "GET /dump.txt", app.showDBRows)
-			// b.Route("superadmin.db.dump.full", "GET /dump2.txt", app.showDBDump)
+			b.Route("superadmin.db.dump.full", "GET /fulldump.txt", app.showDBDump)
 			// b.Route("superadmin.db.dump.stats", "GET /stats.txt", app.showDBStats)
 
 			// g.bg.Handle("GET", "/backup", app.downloadDBBackup)

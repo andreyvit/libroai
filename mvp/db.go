@@ -25,13 +25,17 @@ func initAppDB(app *App, opt *AppOptions) {
 	ensure(os.MkdirAll(app.Settings.DataDir, 0755))
 	app.db = must(edb.Open(filepath.Join(app.Settings.DataDir, "bolt.db"), app.Settings.Configuration.Schema, edb.Options{
 		Logf:      log.Printf,
-		Verbose:   false,
+		Verbose:   app.Settings.VerboseDB,
 		IsTesting: false,
 	}))
 }
 
 func closeAppDB(app *App) {
 	app.db.Close()
+}
+
+func (app *App) DB() *edb.DB {
+	return app.db
 }
 
 func (app *App) NewID() flake.ID {

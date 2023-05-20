@@ -9,9 +9,16 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/vmihailenco/msgpack/v5"
+	"github.com/vmihailenco/msgpack/v5/msgpcode"
 )
 
 var ErrInvalid = errors.New("invalid flake")
+
+const zeros = "0"
+
+var zerob = []byte(zeros)
 
 type ID uint64
 
@@ -20,6 +27,9 @@ func (id ID) IsZero() bool {
 }
 
 func (id ID) String() string {
+	if id == 0 {
+		return zeros
+	}
 	var b [8]byte
 	binary.BigEndian.PutUint64(b[:], uint64(id))
 	return hex.EncodeToString(b[:])
@@ -41,11 +51,43 @@ func (id ID) StringBytes(quote byte) []byte {
 	}
 }
 
+func (v ID) EncodeMsgpack(enc *msgpack.Encoder) error {
+	if v == 0 {
+		return enc.EncodeNil()
+	} else {
+		return enc.EncodeUint64(uint64(v))
+	}
+}
+func (v *ID) DecodeMsgpack(dec *msgpack.Decoder) error {
+	code, err := dec.PeekCode()
+	if err != nil {
+		return err
+	}
+	if code == msgpcode.Nil {
+		*v = 0
+		return nil
+	} else if msgpcode.IsBin(code) || msgpcode.IsString(code) {
+		s, err := dec.DecodeString()
+		if err != nil {
+			return err
+		}
+		*v, err = Parse(s)
+		return err
+	} else {
+		n, err := dec.DecodeUint64()
+		*v = ID(n)
+		return err
+	}
+}
+
 func Parse(s string) (ID, error) {
 	return ParseBytes([]byte(s))
 }
 
 func ParseBytes(s []byte) (ID, error) {
+	if bytes.Equal(s, zerob) {
+		return 0, nil
+	}
 	if len(s) != 16 {
 		return 0, ErrInvalid
 	}

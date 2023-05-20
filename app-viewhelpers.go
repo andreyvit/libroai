@@ -19,7 +19,7 @@ func (app *App) registerViewHelpers(funcs template.FuncMap) {
 		}
 
 		perm := must(m.ParsePermission(permStr))
-		rc := fullRC.From(data.RC)
+		rc := fullRC.From(data.BaseRC())
 		return rc.Can(perm, obj)
 	}
 	funcs["mood_text_class"] = func(mood mvp.Mood) string {
