@@ -8,6 +8,7 @@ import (
 	"github.com/andreyvit/buddyd/mvp"
 	"github.com/andreyvit/buddyd/mvp/flake"
 	"github.com/andreyvit/edb"
+	"github.com/andreyvit/openai"
 )
 
 func (app *App) showNewChat(rc *RC, in *struct{}) (*mvp.ViewData, error) {
@@ -52,8 +53,9 @@ func (app *App) sendChatMessage(rc *RC, in *struct {
 	if in.Message == "" {
 		return app.Redirect("chat.view", "chat", in.ChatID), nil
 	}
-
-	flogger.Log(rc, "in.ChatID = %v", in.ChatID)
+	if openai.TokenCount(in.Message, DefaultModel) > MaxMsgTokenCount {
+		return nil, fmt.Errorf("message too long")
+	}
 
 	chat, err := loadChat(rc, in.ChatID, true)
 	if err != nil {
@@ -71,9 +73,13 @@ func (app *App) sendChatMessage(rc *RC, in *struct {
 		Role: m.MessageRoleUser,
 		Text: in.Message,
 	})
-	if isNew {
-		edb.Put(rc, chat)
+
+	_, err = app.ProduceBotMessage(rc, chat, content)
+	if err != nil {
+		return nil, err
 	}
+
+	edb.Put(rc, chat)
 	edb.Put(rc, content)
 
 	// app.SendMessage(rc.Ctx, chat, in.Message)

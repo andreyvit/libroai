@@ -3,6 +3,7 @@ package m
 import (
 	"fmt"
 
+	"github.com/andreyvit/openai"
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/exp/slices"
 )
@@ -24,6 +25,18 @@ func (v MessageRole) IsBot() bool {
 }
 func (v MessageRole) IsSystem() bool {
 	return v == MessageRoleSystem
+}
+func (v MessageRole) OpenAIRole() openai.Role {
+	switch v {
+	case MessageRoleUser:
+		return openai.User
+	case MessageRoleBot:
+		return openai.Assistant
+	case MessageRoleSystem:
+		return openai.System
+	default:
+		panic(fmt.Errorf("invalid MessageRole %d", v))
+	}
 }
 
 var _messageRoleStrings = []string{
