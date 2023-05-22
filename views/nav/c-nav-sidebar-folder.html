@@ -1,0 +1,9 @@
+{{if .folder.IsRoot}}
+<c-nav-sidebar-item title="Library" icon="icons/navbar-dashboard.svg" route="lib.home" sempath={{.folder.SemanticPath}} />
+{{else}}
+<c-nav-sidebar-item title={{.folder.Name}} letter={{.folder.FirstLetter}} route="lib.folder" path-folder={{.folder.ID}} sempath={{.folder.SemanticPath}} />
+{{end}}
+
+{{range .folder.ChildenIDs}}{{with $.RC.Library.Folder .}}
+<c-nav-sidebar-folder folder={{.}} />
+{{end}}{{end}}

@@ -79,6 +79,9 @@ func (app *App) registerBuiltinViewHelpers(m template.FuncMap) {
 		return nil
 	}
 	m["classes"] = JoinClasses
+	m["dump"] = func(v any) string {
+		return fmt.Sprintf("%T %v", v, v)
+	}
 }
 
 func (app *App) renderLink(data *RenderData) template.HTML {

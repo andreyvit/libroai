@@ -68,6 +68,7 @@ type Form struct {
 	finalized bool
 	fields    map[string]*Field
 	Multipart bool
+	URL       string
 	Group
 }
 

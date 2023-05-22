@@ -1,0 +1,19 @@
+<section class="SubfolderList">
+    <c-section-title>Subfolders</c-section-title>
+
+    <ul>    
+        {{range .Folder.Subfolders}}
+        <li>Subfolder {{.Name}}</li>
+        {{end}}
+    </ul>
+</section>
+
+<section class="ItemList">
+    <c-section-title>Items</c-section-title>
+
+    <ul>    
+        {{range .Folder.Items}}
+        <li>Item {{.Name}}</li>
+        {{end}}
+    </ul>
+</section>

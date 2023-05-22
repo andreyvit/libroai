@@ -113,7 +113,8 @@ type RC struct {
 	OriginalUser *m.User
 	Account      *m.Account
 
-	Chats []*m.Chat
+	Chats   []*m.Chat
+	Library *m.AccountLibrary
 }
 
 func (rc *RC) AccountID() m.AccountID {

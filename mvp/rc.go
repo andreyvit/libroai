@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/andreyvit/buddyd/mvp/flake"
@@ -67,6 +68,8 @@ type RC struct {
 
 	RateLimitPreset RateLimitPreset
 	RateLimitKey    string
+
+	extraLogger func(format string, args ...any)
 }
 
 func NewRC(ctx context.Context, app *App, requestID string) *RC {
@@ -126,6 +129,24 @@ func (rc *RC) DBTx() *edb.Tx {
 
 func (rc *RC) Logf(format string, args ...any) {
 	rc.app.logf(format, args...)
+	if rc.extraLogger != nil {
+		rc.extraLogger(format, args...)
+	}
+}
+
+func (rc *RC) LogTo(buf *strings.Builder) {
+	if buf == nil {
+		rc.extraLogger = nil
+	} else {
+		rc.extraLogger = func(format string, args ...any) {
+			s := fmt.Sprintf(format, args...)
+			s = strings.TrimPrefix(s, fmt.Sprintf("[%s] ", rc.RequestID))
+			buf.WriteString(s)
+			if !strings.HasSuffix(s, "\n") {
+				buf.WriteByte('\n')
+			}
+		}
+	}
 }
 
 func (rc *RC) Close() {

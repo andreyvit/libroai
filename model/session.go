@@ -19,6 +19,24 @@ type Account struct {
 	Disabled bool      `msgpack:"dis,omitempty"`
 }
 
+type AccountObjectKey struct {
+	AccountID AccountID
+	ObjectID  flake.ID
+}
+
+func AccountObject(a AccountID, o flake.ID) AccountObjectKey {
+	return AccountObjectKey{a, o}
+}
+
+type AccountStringKey struct {
+	AccountID AccountID
+	String    string
+}
+
+func AccountString(a AccountID, s string) AccountStringKey {
+	return AccountStringKey{a, s}
+}
+
 // type Superadmin struct {
 // 	ID        flake.ID `msgpack:"-"`
 // 	Email     string   `msgpack:"e"`

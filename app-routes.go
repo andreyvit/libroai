@@ -3,8 +3,11 @@ package main
 import "github.com/andreyvit/buddyd/mvp"
 
 func (app *App) registerRoutes(b *mvp.RouteBuilder) {
-	b.UseIn("authenticate", app.AuthenticateRequestMiddleware)
 	b.Static("/static")
+
+	b.UseIn("authenticate", app.AuthenticateRequestMiddleware)
+	b.Use(fullRC.WrapAE(app.initAccountMiddleware))
+
 	b.Route("landing.home", "GET /", app.showLandingHome)
 	b.Route("landing.signup", "POST /start", app.handleLandingSignup)
 	b.Route("landing.waitlist", "GET /waitlist/", app.showWaitlist)
@@ -27,8 +30,10 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 
 	b.Group("/lib", func(b *mvp.RouteBuilder) {
 		b.UseIn("authorize", fullRC.WrapAE(requireAdmin))
+		b.Use(fullRC.WrapAE(loadAccountLibraryMiddleware))
 
-		b.Route("lib.home", "GET /", app.showLibraryHome)
+		b.Route("lib.home", "GET /", app.showLibraryRootFolder)
+		b.Route("lib.folder", "GET /folders/:folder/", app.showLibraryFolder)
 	})
 
 	b.Group("/mod", func(b *mvp.RouteBuilder) {
@@ -50,6 +55,11 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 
 		b.Route("superadmin.home", "GET /", app.showSuperadminHome)
 		// b.Route("superadmin.superadmins.save", "POST /superadmins/", app.saveSuperadmin)
+
+		b.Group("/maintenance", func(b *mvp.RouteBuilder) {
+			b.Route("superadmin.maintenance", "GET /", app.listSuperadminProcedures)
+			b.Route("superadmin.maintenance.run", "POST /:procedure/", app.runSuperadminProcedure)
+		})
 
 		b.Group("/db", func(b *mvp.RouteBuilder) {
 			b.Route("db.tables", "GET /", app.listSuperadminTables)

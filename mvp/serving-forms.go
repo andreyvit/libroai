@@ -26,3 +26,7 @@ func (app *App) RenderForm(rc *RC, form *forms.Form) template.HTML {
 	}
 	return form.Render(r)
 }
+
+func (rc *RC) HandleForm(form *forms.Form) bool {
+	return form.ProcessRequest(rc.Request.Request)
+}

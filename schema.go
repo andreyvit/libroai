@@ -73,4 +73,46 @@ var (
 	ChatContent = edb.AddTable(schema, "chat_content", 1, func(row *m.ChatContent, ib *edb.IndexBuilder) {
 	}, func(tx *edb.Tx, row *m.ChatContent, oldVer uint64) {
 	}, []*edb.Index{})
+
+	Folders = edb.AddTable(schema, "folders", 1, func(row *m.Folder, ib *edb.IndexBuilder) {
+		ib.Add(FoldersByAccountParent, m.AccountObject(row.AccountID, row.ParentID))
+	}, func(tx *edb.Tx, row *m.Folder, oldVer uint64) {
+	}, []*edb.Index{
+		FoldersByAccountParent,
+	})
+	FoldersByAccountParent = edb.AddIndex[m.AccountObjectKey]("by_account_parent")
+
+	Items = edb.AddTable(schema, "items", 1, func(row *m.Item, ib *edb.IndexBuilder) {
+		ib.Add(ItemsByAccount, row.AccountID)
+		ib.Add(ItemsByFolder, row.FolderID)
+	}, func(tx *edb.Tx, row *m.Item, oldVer uint64) {
+	}, []*edb.Index{
+		ItemsByAccount,
+		ItemsByFolder,
+	})
+	ItemsByAccount = edb.AddIndex[m.AccountID]("by_account")
+	ItemsByFolder  = edb.AddIndex[m.FolderID]("by_folder")
+
+	Content = edb.AddTable(schema, "content", 1, func(row *m.Content, ib *edb.IndexBuilder) {
+		ib.Add(ContentByAccount, row.AccountID)
+		ib.Add(ContentByIRO, m.ContentIROKey{
+			ItemID:  row.ItemID,
+			Role:    row.Role,
+			Ordinal: row.Ordinal,
+		})
+	}, func(tx *edb.Tx, row *m.Content, oldVer uint64) {
+	}, []*edb.Index{
+		ContentByAccount,
+		ContentByIRO,
+	})
+	ContentByAccount = edb.AddIndex[m.AccountID]("by_account")
+	ContentByIRO     = edb.AddIndex[m.ContentIROKey]("by_iro")
+
+	Embeddings = edb.AddTable(schema, "embeddings", 1, func(row *m.ContentEmbedding, ib *edb.IndexBuilder) {
+		ib.Add(EmbeddingsByAccountType, m.ContentEmbeddingAccountTypeKey{AccountID: row.AccountID, Type: row.Type})
+	}, func(tx *edb.Tx, row *m.ContentEmbedding, oldVer uint64) {
+	}, []*edb.Index{
+		EmbeddingsByAccountType,
+	})
+	EmbeddingsByAccountType = edb.AddIndex[m.ContentEmbeddingAccountTypeKey]("by_account_type")
 )

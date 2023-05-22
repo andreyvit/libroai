@@ -9,8 +9,7 @@
     </c-nav-sidebar-group>
     {{else if $.IsActive "lib"}}
     <c-nav-sidebar-group>
-      <c-nav-sidebar-item title="Library" letter="F" route="admin.home" sempath="admin" />
-      <c-nav-sidebar-item title="Lib Foo" icon="icons/navbar-dashboard.svg" route="mod.home" sempath="mod" />
+      <c-nav-sidebar-folder folder={{$.RC.Library.RootFolder}} />
     </c-nav-sidebar-group>
     {{else if $.IsActive "mod"}}
     <c-nav-sidebar-group>
@@ -34,6 +33,7 @@
     </c-nav-sidebar-group>
     {{else if $.IsActive "superadmin"}}
     <c-nav-sidebar-group>
+      <c-nav-sidebar-item title="Maintenance" letter="D" route="superadmin.maintenance" sempath="superadmin/maintenance" />
       <c-nav-sidebar-item title="DB" letter="D" route="db.tables" sempath="superadmin/db" />
     </c-nav-sidebar-group>
     {{end}}
