@@ -5,6 +5,7 @@ type Embedding = []float64
 type ContentEmbedding struct {
 	ContentEmbeddingKey `msgpack:"-"`
 	AccountID           AccountID `msgpack:"a"`
+	ItemID              ItemID    `msgpack:"i"`
 	Embedding           `msgpack:"e"`
 }
 

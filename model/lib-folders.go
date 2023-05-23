@@ -43,6 +43,22 @@ type AccountLibrary struct {
 	FoldersBySlug map[string]*Folder
 }
 
+func NewAccountLibrary(folders int) *AccountLibrary {
+	return &AccountLibrary{
+		RootFolderID:  0,
+		Folders:       make(map[FolderID]*Folder, folders),
+		FoldersBySlug: make(map[string]*Folder, folders),
+	}
+}
+
+func (lib *AccountLibrary) AddFolder(fldr *Folder) {
+	if fldr.ParentID == 0 {
+		lib.RootFolderID = fldr.ID
+	}
+	lib.Folders[fldr.ID] = fldr
+	lib.FoldersBySlug[fldr.Slug] = fldr
+}
+
 func (lib *AccountLibrary) RootFolder() *Folder {
 	if lib.RootFolderID == 0 {
 		return nil

@@ -110,9 +110,12 @@ var (
 
 	Embeddings = edb.AddTable(schema, "embeddings", 1, func(row *m.ContentEmbedding, ib *edb.IndexBuilder) {
 		ib.Add(EmbeddingsByAccountType, m.ContentEmbeddingAccountTypeKey{AccountID: row.AccountID, Type: row.Type})
+		ib.Add(EmbeddingsByItem, row.ItemID)
 	}, func(tx *edb.Tx, row *m.ContentEmbedding, oldVer uint64) {
 	}, []*edb.Index{
 		EmbeddingsByAccountType,
+		EmbeddingsByItem,
 	})
 	EmbeddingsByAccountType = edb.AddIndex[m.ContentEmbeddingAccountTypeKey]("by_account_type")
+	EmbeddingsByItem        = edb.AddIndex[m.ItemID]("by_item")
 )
