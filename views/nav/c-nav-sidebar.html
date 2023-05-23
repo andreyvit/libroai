@@ -1,4 +1,4 @@
-<nav class="flex flex-1 flex-col">
+<nav class="flex flex-col {{.class}}" style="{{.style}}">
   <ul role="list" class="flex flex-1 flex-col gap-y-7">
     {{if $.IsActive "chat"}}
     <c-nav-sidebar-item title="New Chat" route="chat.home" sempath="chat/c/0" />

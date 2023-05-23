@@ -10,27 +10,22 @@
   <script src="/static/include-livereload.js" defer></script>
   {{.Head}}
 </head>
-<body class="h-full p-0 m-0 antialiased bg-gray-50 text-body font-body">
-  <div class="min-h-full flex flex-col">
-    <c-nav-topbar />
+<body class="grid | min-h-full p-0 m-0 antialiased bg-neutral-100 text-body font-body" style="grid-template-columns: [topcover-start leftcover-start] minmax(1rem, 1fr) [header-start sidebar-start] minmax(200px,300px) [sidebar-end leftcover-end rightcover-start main-start] minmax(300px, 700px) [main-end header-end] 1fr [topcover-end rightcover-end]; grid-template-rows: [topcover-start header-start] min-content [header-end topcover-end leftcover-start rightcover-start sidebar-start main-start] minmax(1rem, 1fr) [sidebar-end main-end leftcover-end rightcover-end]">
 
-    <div class="flex flex-wrap items-stretch | grow max-w-7xl mx-auto">
-      <div class="flex items-stretch justify-end | bg-white border-gray-200 border-r py-4">
-        <div class="flex flex-col gap-y-5 | w-[18rem] px-6">
-          <c-nav-sidebar />
-        </div>
-      </div>
+  <c-nav-topbar class="order-3" style="grid-area: header" />
 
-      <div class="basis-0 grow-[8] min-w-1/2 py-10 px-4 sm:px-6 lg:px-8 flex flex-col items-start justify-items-start">
-        <header class="">
-          <h1 class="text-3xl font-bold leading-tight tracking-tight text-gray-900">{{.Title}}</h1>
-        </header>
-        <main class="">
-          {{.Content}}
-        </main>
-      </div>
-    </div>
-  </div>
+  <c-nav-sidebar class="pr-4 py-4 sm:pr-6" style="grid-area: sidebar" />
+
+  <main class="bg-neutral-100 pl-4 py-4 sm:pl-6" style="grid-area: main">
+    <header class="">
+      <h1 class="text-3xl font-bold leading-tight tracking-tight text-gray-900">{{.Title}}</h1>
+    </header>
+    {{.Content}}
+  </main>
+
+  <div class="-order-1 bg-white border border-neutral-200" style="grid-area: topcover"></div>
+  <div class="-order-1 bg-white" style="grid-area: leftcover"></div>
+  <div class="-order-1 bg-neutral-100" style="grid-area: rightcover"></div>
 </body>
 </html>
 
