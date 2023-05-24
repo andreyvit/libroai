@@ -10,13 +10,15 @@ import (
 type EmbeddingType uint8
 
 const (
-	EmbeddingTypeNone  = EmbeddingType(0)
-	EmbeddingTypeAda02 = EmbeddingType(1)
+	EmbeddingTypeNone   = EmbeddingType(0)
+	EmbeddingTypeAda002 = EmbeddingType(1)
+
+	CurrentEmbeddingType = EmbeddingTypeAda002
 )
 
 var _embeddingTypeStrings = []string{
 	"",
-	"ada02",
+	"ada002",
 }
 
 func (v EmbeddingType) String() string {

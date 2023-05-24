@@ -100,6 +100,10 @@ func (rc *RC) App() *App {
 	return rc.app
 }
 
+func (rc *RC) BaseRC() *RC {
+	return rc
+}
+
 func (rc *RC) SessionID() flake.ID {
 	return rc.auth.SessionID
 }

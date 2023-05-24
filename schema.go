@@ -70,7 +70,7 @@ var (
 	ChatsByAccount = edb.AddIndex[m.AccountID]("by_account")
 	ChatsByUser    = edb.AddIndex[m.UserID]("by_user")
 
-	ChatContent = edb.AddTable(schema, "chat_content", 1, func(row *m.ChatContent, ib *edb.IndexBuilder) {
+	ChatContent = edb.AddTable(schema, "chat_content_02", 1, func(row *m.ChatContent, ib *edb.IndexBuilder) {
 	}, func(tx *edb.Tx, row *m.ChatContent, oldVer uint64) {
 	}, []*edb.Index{})
 

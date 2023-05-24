@@ -3,9 +3,11 @@ package main
 import "github.com/andreyvit/openai"
 
 const (
-	DefaultModel          = openai.ModelChatGPT4
-	MinModel              = openai.ModelChatGPT35Turbo
-	EmbeddingModel        = "text-embedding-ada-002"
-	MaxMsgTokenCount      = 768
-	MaxResponseTokenCount = 512
+	// DefaultModel              = openai.ModelChatGPT4
+	DefaultModel              = openai.ModelChatGPT35Turbo
+	MinModel                  = openai.ModelChatGPT35Turbo
+	EmbeddingModel            = openai.ModelEmbeddingAda002
+	MaxMsgTokenCount          = 768
+	MaxSystemPromptTokenCount = 1024
+	MaxResponseTokenCount     = 512
 )

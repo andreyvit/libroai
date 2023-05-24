@@ -17,16 +17,62 @@ type Chat struct {
 }
 
 type ChatContent struct {
-	ChatID   ChatID     `msgpack:"-"`
-	Messages []*Message `msgpack:"m"`
+	ChatID ChatID  `msgpack:"-"`
+	Turns  []*Turn `msgpack:"t"`
+}
+
+func (cc *ChatContent) FirstUserMessage() *Message {
+	if t := cc.FirstUserTurn(); t != nil {
+		return t.LatestVersion()
+	}
+	return nil
+}
+
+func (cc *ChatContent) LatestUserMessage() *Message {
+	if t := cc.LatestUserTurn(); t != nil {
+		return t.LatestVersion()
+	}
+	return nil
+}
+
+func (cc *ChatContent) FirstUserTurn() *Turn {
+	for _, t := range cc.Turns {
+		if t.Role == MessageRoleUser {
+			return t
+		}
+	}
+	return nil
+}
+
+func (cc *ChatContent) LatestUserTurn() *Turn {
+	n := len(cc.Turns)
+	for i := n - 1; i >= 0; i-- {
+		t := cc.Turns[i]
+		if t.Role == MessageRoleUser {
+			return t
+		}
+	}
+	return nil
+}
+
+type Turn struct {
+	Role     MessageRole `msgpack:"r"`
+	Versions []*Message  `msgpack:"m"`
+}
+
+func (t *Turn) LatestVersion() *Message {
+	return t.Versions[len(t.Versions)-1]
 }
 
 type MessageID = flake.ID
 
 type Message struct {
-	ID   MessageID   `msgpack:"#"`
-	Role MessageRole `msgpack:"r"`
-	Text string      `msgpack:"t"`
+	ID                MessageID   `msgpack:"#"`
+	Role              MessageRole `msgpack:"r"`
+	Text              string      `msgpack:"t"`
+	EmbeddingAda002   Embedding   `msgpack:"e2,omitempty"`
+	ContextContentIDs []ContentID `msgpack:"cc,omitempty"`
+	ContextDistances  []float64   `msgpack:"cd,omitempty"`
 }
 
 type ChatVM struct {
@@ -45,9 +91,10 @@ func (m *MessageVM) Paragraphs() []string {
 func WrapChat(chat *Chat, content *ChatContent) *ChatVM {
 	chatVM := &ChatVM{
 		Chat:     chat,
-		Messages: make([]*MessageVM, 0, len(content.Messages)),
+		Messages: make([]*MessageVM, 0, len(content.Turns)),
 	}
-	for _, msg := range content.Messages {
+	for _, t := range content.Turns {
+		msg := t.LatestVersion()
 		chatVM.Messages = append(chatVM.Messages, &MessageVM{
 			Message: msg,
 		})

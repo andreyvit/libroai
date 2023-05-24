@@ -68,11 +68,27 @@ func (app *App) sendChatMessage(rc *RC, in *struct {
 		content.ChatID = chat.ID
 	}
 
-	content.Messages = append(content.Messages, &m.Message{
+	msg := &m.Message{
 		ID:   app.NewID(),
 		Role: m.MessageRoleUser,
 		Text: in.Message,
+	}
+
+	embedding, usage, err := openai.ComputeEmbedding(rc, msg.Text, app.httpClient, app.Settings().OpenAICreds)
+	if err != nil {
+		return nil, fmt.Errorf("embeddings: %w", err)
+	}
+	chat.Cost += openai.Cost(usage.PromptTokens, usage.CompletionTokens, EmbeddingModel)
+	msg.EmbeddingAda002 = embedding
+
+	content.Turns = append(content.Turns, &m.Turn{
+		Role:     m.MessageRoleUser,
+		Versions: []*m.Message{msg},
 	})
+	edb.Put(rc, chat)
+	edb.Put(rc, content)
+
+	loadAccountEmbeddings(rc, false)
 
 	_, err = app.ProduceBotMessage(rc, chat, content)
 	if err != nil {
@@ -81,8 +97,6 @@ func (app *App) sendChatMessage(rc *RC, in *struct {
 
 	edb.Put(rc, chat)
 	edb.Put(rc, content)
-
-	// app.SendMessage(rc.Ctx, chat, in.Message)
 
 	return app.Redirect("chat.view", "chat", chat.ID), nil
 }

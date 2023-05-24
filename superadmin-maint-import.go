@@ -155,13 +155,14 @@ func (app *App) importProcedure() *Procedure {
 					}
 					edb.Put(rc, c)
 
-					e := &m.ContentEmbedding{
-						ContentEmbeddingKey: m.ContentEmbeddingKey{ContentID: c.ID, Type: m.EmbeddingTypeAda02},
+					emb := &m.ContentEmbedding{
+						ContentEmbeddingKey: m.ContentEmbeddingKey{ContentID: c.ID, Type: m.EmbeddingTypeAda002},
 						AccountID:           rc.AccountID(),
 						ItemID:              item.ID,
 						Embedding:           entry.TextEmbedding,
 					}
-					edb.Put(rc, e)
+					emb.UpdateTokenCount(c)
+					edb.Put(rc, emb)
 				}
 			}
 

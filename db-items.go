@@ -1,10 +1,24 @@
 package main
 
 import (
+	"github.com/andreyvit/buddyd/internal/flogger"
 	m "github.com/andreyvit/buddyd/model"
 	"github.com/andreyvit/edb"
 	"golang.org/x/exp/slices"
 )
+
+func loadAccountEmbeddings(rc *RC, reload bool) {
+	if rc.Embeddings != nil && !reload {
+		return
+	}
+	embs := new(m.AccountEmbeddings)
+	embs.Embeddings = edb.All(edb.ExactIndexScan[m.ContentEmbedding](rc, EmbeddingsByAccountType, m.ContentEmbeddingAccountTypeKey{
+		AccountID: rc.AccountID(),
+		Type:      m.CurrentEmbeddingType,
+	}))
+	rc.Embeddings = embs
+	flogger.Log(rc, "Loaded %d embeddings", len(rc.Embeddings.Embeddings))
+}
 
 func deleteContentByItem(rc *RC, itemID m.ItemID) {
 	edb.DeleteAll(rc.DBTx().IndexScan(ContentByIRO, edb.ExactScan(m.ContentIROKey{ItemID: itemID}).Prefix(1)))
