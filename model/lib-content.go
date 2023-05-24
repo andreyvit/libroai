@@ -23,3 +23,8 @@ type ContentIOKey struct {
 	ItemID  ItemID `msgpack:"i"`
 	Ordinal int    `msgpack:"o"`
 }
+
+type ContentGroupVM struct {
+	Role     ContentRole
+	Contents []*Content
+}

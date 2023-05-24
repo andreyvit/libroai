@@ -1,0 +1,33 @@
+<div class="flex flex-col space-y-4">
+
+    <section class="ItemDetails">
+        <c-section-title>{{.Item.Name}}</c-section-title>
+
+        <dl>
+            {{if .Item.ImportSourceName}}
+            <dt>ImportSourceName</dt>
+            <dd>{{.Item.ImportSourceName}}</dd>
+            {{end}}
+            {{if .Item.Link}}
+            <dt>Link</dt>
+            <dd>{{.Item.Link}}</dd>
+            {{end}}
+        </dl>
+
+    </section>
+
+    {{range .ContentGroups}}
+    {{range .Contents}}
+    <section class="ContentGroup">
+        <c-section-title>{{.Role}} {{.Ordinal}}</c-section-title>
+
+        <ol>
+            <li><pre class="whitespace-pre-wrap">
+                {{- .Text -}}
+            </pre></li>
+        </ol>
+    </section>
+    {{end}}
+    {{end}}
+
+</div>

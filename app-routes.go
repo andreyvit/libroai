@@ -34,6 +34,7 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 
 		b.Route("lib.home", "GET /", app.showLibraryRootFolder)
 		b.Route("lib.folder", "GET /folders/:folder/", app.showLibraryFolder)
+		b.Route("lib.item", "GET /items/:item/", app.showLibraryItem)
 	})
 
 	b.Group("/mod", func(b *mvp.RouteBuilder) {

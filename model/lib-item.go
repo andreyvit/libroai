@@ -1,6 +1,10 @@
 package m
 
-import "github.com/andreyvit/buddyd/mvp/flake"
+import (
+	"fmt"
+
+	"github.com/andreyvit/buddyd/mvp/flake"
+)
 
 type ItemID = flake.ID
 
@@ -12,4 +16,8 @@ type Item struct {
 	FileName         string    `msgpack:"fn,omitempty"`
 	ImportSourceName string    `msgpack:"isn,omitempty"`
 	Link             string    `msgpack:"l,omitempty"`
+}
+
+func (item *Item) SemanticPath() string {
+	return fmt.Sprintf("lib/items/%v", item.ID)
 }
