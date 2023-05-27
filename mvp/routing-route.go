@@ -4,18 +4,20 @@ import (
 	"reflect"
 
 	"github.com/andreyvit/buddyd/mvp/expandable"
+	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
 )
 
 type Route struct {
-	desc       string
-	routeName  string
-	method     string
-	path       string
-	funcVal    reflect.Value
-	rcFacet    expandable.Any[RC]
-	inType     reflect.Type
-	idempotent bool
-	pathParams []string
+	desc          string
+	routeName     string
+	method        string
+	path          string
+	funcVal       reflect.Value
+	rcFacet       expandable.Any[RC]
+	inType        reflect.Type
+	idempotent    bool
+	storeAffinity mvpm.StoreAffinity
+	pathParams    []string
 	routingContext
 }
 

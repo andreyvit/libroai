@@ -13,11 +13,10 @@ import (
 
 	"github.com/andreyvit/buddyd/internal/postmark"
 	"github.com/andreyvit/buddyd/mvp/flake"
+	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
 	"github.com/andreyvit/edb"
 	"github.com/uptrace/bunrouter"
 )
-
-type Module = func(app *App, hooks *Hooks)
 
 type AppOptions struct {
 	Context context.Context
@@ -35,6 +34,7 @@ type AppBehaviors struct {
 
 type App struct {
 	ValueSet
+	DBSchema      edb.Schema
 	Configuration *Configuration
 	Settings      *Settings
 	Hooks         Hooks
@@ -55,10 +55,13 @@ type App struct {
 	db  *edb.DB
 	gen *flake.Gen
 
+	methods MethodRegistry
+
 	postmrk *postmark.Caller
 
 	rateLimiters map[RateLimitPreset]map[RateLimitGranularity]*RateLimiter
 
+	inMemJobs InMemJobs
 	// rateLimiters map[string]
 }
 
@@ -109,7 +112,7 @@ func (app *App) Initialize(settings *Settings, opt AppOptions) {
 
 	{
 		rc := NewRC(ctx, app, "init")
-		err := app.InTx(rc, true, func() error {
+		err := app.InTx(rc, mvpm.SafeWriter, func() error {
 			runHooksFwd2(app.Hooks.initDB, app, rc)
 			return nil
 		})

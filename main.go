@@ -16,7 +16,6 @@ import (
 	"github.com/andreyvit/buddyd/internal/accesstokens"
 	m "github.com/andreyvit/buddyd/model"
 	"github.com/andreyvit/buddyd/mvp"
-	"github.com/andreyvit/buddyd/mvp/expandable"
 	"github.com/andreyvit/buddyd/mvp/jsonext"
 	"github.com/andreyvit/buddyd/mvp/jwt"
 	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
@@ -35,11 +34,6 @@ var (
 	embeddedViewsFS embed.FS
 	//go:embed static
 	embeddedStaticAssetsFS embed.FS
-
-	appSchema    = expandable.NewSchema("app")
-	fullSettings = expandable.Derive[Settings](appSchema, mvp.BaseSettings)
-	fullApp      = expandable.Derive[App](appSchema, mvp.BaseApp).WithNew(newApp)
-	fullRC       = expandable.Derive[RC](appSchema, mvp.BaseRC)
 )
 
 var configuration = &mvp.Configuration{
@@ -62,10 +56,11 @@ var configuration = &mvp.Configuration{
 	EmbeddedStaticFS: embeddedStaticAssetsFS,
 	EmbeddedViewsFS:  embeddedViewsFS,
 
-	SetupHooks:  fullApp.Wrap(setupHooks),
 	LoadSecrets: loadSecrets,
 
-	Schema: schema,
+	Modules: []*mvp.Module{
+		AppModule,
+	},
 
 	Types: map[mvpm.Type][]string{
 		mvpm.TypeUser:    {"u"},
@@ -165,16 +160,6 @@ func newApp() *App {
 		},
 		dangerousRateLimiter: rate.NewLimiter(rate.Every(time.Second*5), 5),
 	}
-}
-
-func setupHooks(app *App) {
-	app.Hooks.InitApp(fullApp.Wrap(initApp))
-	app.Hooks.InitDB(expandable.Wrap2(initDB, fullApp, fullRC))
-	app.Hooks.MakeRowKey(expandable.Wrap21A(makeRowKey, fullApp))
-	app.Hooks.ResetAuth(expandable.Wrap2(resetAuth, fullApp, fullRC))
-	app.Hooks.PostAuth(expandable.Wrap2E(loadSessionAndUser, fullApp, fullRC))
-	app.Hooks.SiteRoutes(mvp.DefaultSite, app.registerRoutes)
-	app.Hooks.Helpers(app.registerViewHelpers)
 }
 
 func initApp(app *App) {

@@ -31,7 +31,7 @@ func (app *App) listSuperadminTables(rc *mvp.RC, in *struct {
 		Data: &struct {
 			Tables []*edb.Table
 		}{
-			Tables: schema.Tables(),
+			Tables: app.DBSchema.Tables(),
 		},
 		Layout: "default",
 	}, nil
@@ -41,7 +41,7 @@ func (app *App) listSuperadminTableRows(rc *mvp.RC, in *struct {
 	Table string `json:"-" form:"table,path"`
 	Index string `json:"index"`
 }) (*mvp.ViewData, error) {
-	tbl := schema.TableNamed(in.Table)
+	tbl := app.DBSchema.TableNamed(in.Table)
 	if tbl == nil {
 		return nil, httperrors.BadRequest.Msg(fmt.Sprintf("unknown table %q", in.Table))
 	}
@@ -101,7 +101,7 @@ func (app *App) handleSuperadminTableRowForm(rc *mvp.RC, in *struct {
 	ModCount int    `json:"modcount"`
 	Delete   bool   `json:"delete"`
 }) (any, error) {
-	tbl := schema.TableNamed(in.Table)
+	tbl := app.DBSchema.TableNamed(in.Table)
 	if tbl == nil {
 		return nil, httperrors.BadRequest.Msg(fmt.Sprintf("unknown table %q", in.Table))
 	}

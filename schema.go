@@ -6,18 +6,16 @@ import (
 	"github.com/andreyvit/edb"
 )
 
-var schema = edb.NewSchema(edb.SchemaOpts{})
-
 var (
-	UserSignInAttempts = edb.AddTable[m.UserSignInAttempt](schema, "UserSignInAttempt", 1, func(row *m.UserSignInAttempt, ib *edb.IndexBuilder) {
+	UserSignInAttempts = edb.AddTable[m.UserSignInAttempt](dbSchema, "UserSignInAttempt", 1, func(row *m.UserSignInAttempt, ib *edb.IndexBuilder) {
 	}, func(tx *edb.Tx, row *m.UserSignInAttempt, oldVer uint64) {
 	}, []*edb.Index{})
 
-	Accounts = edb.AddTable(schema, "accounts", 1, func(row *m.Account, ib *edb.IndexBuilder) {
+	Accounts = edb.AddTable(dbSchema, "accounts", 1, func(row *m.Account, ib *edb.IndexBuilder) {
 	}, func(tx *edb.Tx, row *m.Account, oldVer uint64) {
 	}, []*edb.Index{})
 
-	Users = edb.AddTable(schema, "users", 1, func(row *m.User, ib *edb.IndexBuilder) {
+	Users = edb.AddTable(dbSchema, "users", 1, func(row *m.User, ib *edb.IndexBuilder) {
 		for _, m := range row.Memberships {
 			ib.Add(UsersByAccount, m.AccountID)
 		}
@@ -30,7 +28,7 @@ var (
 	UsersByAccount = edb.AddIndex[flake.ID]("by_account")
 	UsersByEmail   = edb.AddIndex[string]("by_email")
 
-	// Superadmins = edb.AddTable(schema, "superadmins", 1, func(row *m.Superadmin, ib *edb.IndexBuilder) {
+	// Superadmins = edb.AddTable(dbSchema, "superadmins", 1, func(row *m.Superadmin, ib *edb.IndexBuilder) {
 	// 	ib.Add(SuperadminsByEmail, row.EmailNorm)
 	// }, func(tx *edb.Tx, row *m.Superadmin, oldVer uint64) {
 	// }, []*edb.Index{
@@ -38,7 +36,7 @@ var (
 	// })
 	// SuperadminsByEmail = edb.AddIndex[string]("by_email")
 
-	Waitlisters = edb.AddTable(schema, "waitlisters", 1, func(row *m.Waitlister, ib *edb.IndexBuilder) {
+	Waitlisters = edb.AddTable(dbSchema, "waitlisters", 1, func(row *m.Waitlister, ib *edb.IndexBuilder) {
 		ib.Add(WaitlistersByEmail, row.EmailNorm)
 	}, func(tx *edb.Tx, row *m.Waitlister, oldVer uint64) {
 	}, []*edb.Index{
@@ -46,7 +44,7 @@ var (
 	})
 	WaitlistersByEmail = edb.AddIndex[string]("by_email")
 
-	Sessions = edb.AddTable(schema, "sessions", 1, func(row *m.Session, ib *edb.IndexBuilder) {
+	Sessions = edb.AddTable(dbSchema, "sessions", 1, func(row *m.Session, ib *edb.IndexBuilder) {
 		ib.Add(SessionsByActor, row.Actor.ID)
 		if row.AccountID != 0 {
 			ib.Add(SessionsByAccount, row.AccountID)
@@ -59,7 +57,7 @@ var (
 	SessionsByActor   = edb.AddIndex[flake.ID]("by_actor")
 	SessionsByAccount = edb.AddIndex[flake.ID]("by_account")
 
-	Chats = edb.AddTable(schema, "chats", 1, func(row *m.Chat, ib *edb.IndexBuilder) {
+	Chats = edb.AddTable(dbSchema, "chats", 1, func(row *m.Chat, ib *edb.IndexBuilder) {
 		ib.Add(ChatsByAccount, row.AccountID)
 		ib.Add(ChatsByUser, row.UserID)
 	}, func(tx *edb.Tx, row *m.Chat, oldVer uint64) {
@@ -70,11 +68,11 @@ var (
 	ChatsByAccount = edb.AddIndex[m.AccountID]("by_account")
 	ChatsByUser    = edb.AddIndex[m.UserID]("by_user")
 
-	ChatContent = edb.AddTable(schema, "chat_content_02", 1, func(row *m.ChatContent, ib *edb.IndexBuilder) {
+	ChatContent = edb.AddTable(dbSchema, "chat_content_02", 1, func(row *m.ChatContent, ib *edb.IndexBuilder) {
 	}, func(tx *edb.Tx, row *m.ChatContent, oldVer uint64) {
 	}, []*edb.Index{})
 
-	Folders = edb.AddTable(schema, "folders", 1, func(row *m.Folder, ib *edb.IndexBuilder) {
+	Folders = edb.AddTable(dbSchema, "folders", 1, func(row *m.Folder, ib *edb.IndexBuilder) {
 		ib.Add(FoldersByAccountParent, m.AccountObject(row.AccountID, row.ParentID))
 	}, func(tx *edb.Tx, row *m.Folder, oldVer uint64) {
 	}, []*edb.Index{
@@ -82,7 +80,7 @@ var (
 	})
 	FoldersByAccountParent = edb.AddIndex[m.AccountObjectKey]("by_account_parent")
 
-	Items = edb.AddTable(schema, "items", 1, func(row *m.Item, ib *edb.IndexBuilder) {
+	Items = edb.AddTable(dbSchema, "items", 1, func(row *m.Item, ib *edb.IndexBuilder) {
 		ib.Add(ItemsByAccount, row.AccountID)
 		ib.Add(ItemsByFolder, row.FolderID)
 	}, func(tx *edb.Tx, row *m.Item, oldVer uint64) {
@@ -93,7 +91,7 @@ var (
 	ItemsByAccount = edb.AddIndex[m.AccountID]("by_account")
 	ItemsByFolder  = edb.AddIndex[m.FolderID]("by_folder")
 
-	Content = edb.AddTable(schema, "content", 1, func(row *m.Content, ib *edb.IndexBuilder) {
+	Content = edb.AddTable(dbSchema, "content", 1, func(row *m.Content, ib *edb.IndexBuilder) {
 		ib.Add(ContentByAccount, row.AccountID)
 		ib.Add(ContentByIRO, m.ContentIROKey{
 			ItemID:  row.ItemID,
@@ -108,7 +106,7 @@ var (
 	ContentByAccount = edb.AddIndex[m.AccountID]("by_account")
 	ContentByIRO     = edb.AddIndex[m.ContentIROKey]("by_iro")
 
-	Embeddings = edb.AddTable(schema, "embeddings", 1, func(row *m.ContentEmbedding, ib *edb.IndexBuilder) {
+	Embeddings = edb.AddTable(dbSchema, "embeddings", 1, func(row *m.ContentEmbedding, ib *edb.IndexBuilder) {
 		ib.Add(EmbeddingsByAccountType, m.ContentEmbeddingAccountTypeKey{AccountID: row.AccountID, Type: row.Type})
 		ib.Add(EmbeddingsByItem, row.ItemID)
 	}, func(tx *edb.Tx, row *m.ContentEmbedding, oldVer uint64) {

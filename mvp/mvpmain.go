@@ -100,7 +100,11 @@ func Main(ge *Configuration) {
 	}
 
 	app := BaseApp.New()
-	settings.Configuration.SetupHooks(app)
+	for _, mod := range settings.Configuration.Modules {
+		if mod.SetupHooks != nil {
+			mod.SetupHooks(app)
+		}
+	}
 	app.Initialize(settings, AppOptions{})
 	defer app.Close()
 

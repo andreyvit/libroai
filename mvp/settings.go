@@ -2,60 +2,21 @@ package mvp
 
 import (
 	"bytes"
-	"embed"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/andreyvit/buddyd/internal/postmark"
 	"github.com/andreyvit/buddyd/mvp/jsonext"
 	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
-	"github.com/andreyvit/edb"
 	"github.com/andreyvit/jsonfix"
 	"github.com/andreyvit/plainsecrets"
 	"golang.org/x/exp/maps"
 )
-
-type Configuration struct {
-	Envs map[string][]string
-
-	Preinstall func(settings *Settings)
-	Install    func(settings *Settings)
-
-	BuildCommit string
-	BuildVer    string
-
-	EmbeddedConfig   []byte
-	EmbeddedSecrets  string
-	EmbeddedStaticFS embed.FS
-	EmbeddedViewsFS  embed.FS
-
-	ConfigFileName  string
-	SecretsFileName string
-	StaticSubdir    string
-	ViewsSubdir     string
-	LocalDevAppRoot string
-
-	SetupHooks  func(app *App)
-	LoadSecrets func(*Settings, Secrets)
-
-	Schema *edb.Schema
-	Types  map[mvpm.Type][]string
-
-	AuthTokenCookieName string
-	AuthTokenKeys       mvpm.NamedKeySet
-}
-
-func (ge *Configuration) ValidEnvs() []string {
-	result := maps.Keys(ge.Envs)
-	sort.Strings(result)
-	return result
-}
 
 type Settings struct {
 	Env           string

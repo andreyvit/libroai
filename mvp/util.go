@@ -288,3 +288,7 @@ func HTMLify(v any) template.HTML {
 		return template.HTML(template.HTMLEscapeString(fmt.Sprint(v)))
 	}
 }
+
+func sendSignal(c chan<- struct{}) {
+	c <- struct{}{}
+}

@@ -29,6 +29,18 @@ type Any[B any] interface {
 	thisAnyToBase(drvd any) *B
 }
 
+type Impl struct {
+	extraValues []any
+}
+
+type Expandable interface {
+	ExpandableImpl() *Impl
+}
+
+func (impl *Impl) ExpandableImpl() *Impl {
+	return impl
+}
+
 type Base[B any] struct {
 	index  int
 	schema *Schema

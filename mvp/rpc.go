@@ -2,57 +2,12 @@ package mvp
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"reflect"
 
 	"github.com/andreyvit/buddyd/internal/httperrors"
 )
-
-type API struct {
-	Name string
-	// methods         []*APIMethod
-	// methodsByName   map[string]*APIMethod
-	// methodsByNameCI map[string]*APIMethod
-}
-
-func NewAPI(name string) *API {
-	return &API{
-		Name: name,
-		// methodsByName:   make(map[string]*APIMethod),
-		// methodsByNameCI: make(map[string]*APIMethod),
-	}
-}
-
-type APIMethod struct {
-	Name      string
-	InType    reflect.Type
-	InPtrType reflect.Type
-	OutType   reflect.Type
-	NewIn     func() any
-}
-
-func (api *API) Method(name string, in any, out any) *APIMethod {
-	if in == nil {
-		in = &struct{}{}
-	}
-	inPtrType := reflect.TypeOf(in)
-	if inPtrType.Kind() != reflect.Ptr || inPtrType.Elem().Kind() != reflect.Struct {
-		panic(fmt.Errorf("invalid input type %v, expected pointer to struct", inPtrType))
-	}
-	inType := inPtrType.Elem()
-	return &APIMethod{
-		Name:      name,
-		InType:    inType,
-		InPtrType: inPtrType,
-		OutType:   reflect.TypeOf(out), // nil when out == nil
-		NewIn: func() any {
-			return reflect.New(inType).Interface()
-		},
-	}
-}
 
 func ReadAPIRequest(r *http.Request, in any) error {
 	switch r.Method {

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/andreyvit/buddyd/internal/httperrors"
+	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
 	"github.com/uptrace/bunrouter"
 )
 
@@ -37,7 +38,14 @@ func (g *RouteBuilder) Static(path string) {
 	setupStaticServer(g.bg, path, g.app.staticFS)
 }
 
-type RouteOption = any
+type (
+	RouteOption         = any
+	nonIdempotentOption struct{}
+)
+
+var (
+	NonIdempotent = nonIdempotentOption{}
+)
 
 // Route defines a named route. methodAndPath are space-separated.
 //
@@ -94,8 +102,23 @@ func (g *RouteBuilder) Route(routeName string, methodAndPath string, f any, opti
 		switch opt := opt.(type) {
 		case RateLimitPreset:
 			route.rateLimitPreset = opt
+		case mvpm.StoreAffinity:
+			route.storeAffinity = opt
+			if opt.IsWriter() {
+				route.idempotent = false
+			}
+		case nonIdempotentOption:
+			route.idempotent = false
 		default:
 			panic(fmt.Errorf("%s: invalid option %T %v", desc, opt, opt))
+		}
+	}
+
+	if route.storeAffinity == mvpm.UnknownAffinity {
+		if mi.Idempotent {
+			route.storeAffinity = mvpm.SafeReader
+		} else {
+			route.storeAffinity = mvpm.SafeWriter
 		}
 	}
 
