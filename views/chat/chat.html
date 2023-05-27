@@ -11,7 +11,9 @@
         <div class="">{{.Username}}</div>
       </div>
     </div>*/}}
-    <div class="MessageList divide-y pb-64">
+    <mvp-stream-source id="stream-source" src="/chat/events"></mvp-stream-source>
+
+    <div id="message-list" class="divide-y pb-64">
       {{range .Chat.Messages}}
         {{template "chat/_message" ($.Bind .)}}
       {{end}}

@@ -5,6 +5,10 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/andreyvit/buddyd/internal/flogger"
+	"github.com/andreyvit/buddyd/mvp/hotwired"
+	"github.com/andreyvit/buddyd/mvp/sse"
 )
 
 type Redirect struct {
@@ -41,6 +45,32 @@ type RawOutput struct {
 type DebugOutput string
 
 type ResponseHandled struct{}
+
+func (rc *RC) SendTurboStream(id uint64, f func(stream *hotwired.Stream)) {
+	// TODO: cache buffers
+	var stream hotwired.Stream
+	f(&stream)
+	if stream.Buffer.Len() > 0 {
+		msg := sse.Msg{
+			ID:    id,
+			Event: "message",
+			Data:  stream.Buffer.Bytes(),
+		}
+		flogger.Log(rc, "Sending Turbo Stream %d: %s", msg.ID, msg.Data)
+		rc.SendSSE(&msg)
+	}
+}
+
+func (rc *RC) SendSSE(msg *sse.Msg) {
+	header := rc.RespWriter.Header()
+	header.Set("Content-Type", sse.ContentType)
+
+	_, err := rc.RespWriter.Write(msg.Encode(nil))
+	if err != nil {
+		rc.Fail(ClientNetworkingError(err))
+	}
+	rc.RespWriter.(http.Flusher).Flush()
+}
 
 func (app *App) writeResponse(rc *RC, output any, route *Route, w http.ResponseWriter, r *http.Request) error {
 	for _, cookie := range rc.SetCookies {

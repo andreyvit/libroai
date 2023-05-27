@@ -47,7 +47,8 @@ import (
 //
 // As such, this type is meant to be customized for a particular application.
 type RC struct {
-	tx *edb.Tx
+	tx  *edb.Tx
+	err error
 
 	auth Auth
 
@@ -169,9 +170,13 @@ func (rc *RC) Deadline() (deadline time.Time, ok bool) {
 	return rc.parent.Deadline()
 }
 func (rc *RC) Done() <-chan struct{} {
+	// TODO: arrange for Done to handle rc.err
 	return rc.parent.Done()
 }
 func (rc *RC) Err() error {
+	if rc.err != nil {
+		return rc.err
+	}
 	return rc.parent.Err()
 }
 func (rc *RC) Value(key any) any {

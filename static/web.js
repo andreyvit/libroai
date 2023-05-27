@@ -1,7 +1,31 @@
 import * as Turbo from 'https://cdn.skypack.dev/@hotwired/turbo'
 window.Turbo = Turbo
+
 import {Application, Controller} from 'https://unpkg.com/@hotwired/stimulus/dist/stimulus.js'
 window.Stimulus = Application.start()
+
+customElements.define('mvp-stream-source', class extends HTMLElement {
+  connectedCallback() {
+    // console.log('<mvp-stream-source> connect')
+    if (!this.streamSource) {
+      this.streamSource = new EventSource(this.src)
+      Turbo.connectStreamSource(this.streamSource)
+    }
+  }
+
+  disconnectedCallback() {
+    // console.log('<mvp-stream-source> disconnect')
+    requestAnimationFrame(() => {
+      if (this.streamSource && !this.isConnected) {
+        Turbo.disconnectStreamSource(this.streamSource)
+        this.streamSource.close()
+        this.streamSource = null
+      }
+    })
+  }
+
+  get src() { return this.getAttribute("src") || "" }
+})
 
 Stimulus.register('menu', class extends Controller {
   static values = {

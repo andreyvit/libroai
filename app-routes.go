@@ -26,6 +26,8 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 		b.Route("chat.view", "GET /c/:chat", app.showChat)
 		b.Route("chat.messages.send", "POST /c/:chat/send", app.sendChatMessage)
 		b.Route("chat.messages.vote", "POST /c/:chat/vote", app.voteChatResponse)
+
+		b.Route("chat.sse", "GET /events/", app.handleChatEventStream).UseIn("authorize", nil)
 	})
 
 	b.Group("/lib", func(b *mvp.RouteBuilder) {
