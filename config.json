@@ -30,6 +30,9 @@
         "SignInCodeResendInterval": "30s",
 
         "RootUserEmail": "andrey@tarantsov.com",
+
+        "EphemeralWorkerCount": 1,
+        "EphemeralQueueMaxSize": 100,
     },
 
     "@localdevortest": {

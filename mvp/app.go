@@ -57,9 +57,9 @@ type App struct {
 	db  *edb.DB
 	gen *flake.Gen
 
-	methodsByName map[string]*MethodImpl
-	jobsByKind    map[*mvpjobs.Kind]*JobImpl
-	inMemJobs     InMemJobs
+	methodsByName     map[string]*MethodImpl
+	jobsByKind        map[*mvpjobs.Kind]*JobImpl
+	ephemeralJobQueue EphemeralJobQueue
 
 	postmrk *postmark.Caller
 
@@ -98,6 +98,8 @@ func (app *App) Initialize(settings *Settings, opt AppOptions) {
 	if app.BaseURL == nil && settings.BaseURL != "" {
 		app.BaseURL = must(url.Parse(settings.BaseURL))
 	}
+
+	app.initEphemeralJobs()
 
 	app.JobSchema = &mvpjobs.Schema{}
 	app.addModule(builtinModule)

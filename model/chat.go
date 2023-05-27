@@ -55,6 +55,10 @@ func (cc *ChatContent) LatestUserTurn() *Turn {
 	return nil
 }
 
+func (cc *ChatContent) Message(turnIndex int, msgID MessageID) *Message {
+	return cc.Turns[turnIndex].Message(msgID)
+}
+
 type Turn struct {
 	Role     MessageRole `msgpack:"r"`
 	Versions []*Message  `msgpack:"m"`
@@ -64,15 +68,25 @@ func (t *Turn) LatestVersion() *Message {
 	return t.Versions[len(t.Versions)-1]
 }
 
+func (t *Turn) Message(msgID MessageID) *Message {
+	for _, msg := range t.Versions {
+		if msg.ID == msgID {
+			return msg
+		}
+	}
+	return nil
+}
+
 type MessageID = flake.ID
 
 type Message struct {
-	ID                MessageID   `msgpack:"#"`
-	Role              MessageRole `msgpack:"r"`
-	Text              string      `msgpack:"t"`
-	EmbeddingAda002   Embedding   `msgpack:"e2,omitempty"`
-	ContextContentIDs []ContentID `msgpack:"cc,omitempty"`
-	ContextDistances  []float64   `msgpack:"cd,omitempty"`
+	ID                MessageID    `msgpack:"#"`
+	Role              MessageRole  `msgpack:"r"`
+	State             MessageState `msgpack:"s"`
+	Text              string       `msgpack:"t"`
+	EmbeddingAda002   Embedding    `msgpack:"e2,omitempty"`
+	ContextContentIDs []ContentID  `msgpack:"cc,omitempty"`
+	ContextDistances  []float64    `msgpack:"cd,omitempty"`
 }
 
 type ChatVM struct {

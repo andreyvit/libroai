@@ -133,7 +133,19 @@ func Main(ge *Configuration) {
 			RestartDelay: time.Second,
 		}, func(ctx context.Context, quitf func(err error)) error {
 			app.StartJobWorkers(ctx, settings.WorkerCount, quitf)
-			log.Printf("%v: %d job workers started.", settings.AppName, settings.WorkerCount)
+			log.Printf("%v: %d persistent job workers started.", settings.AppName, settings.WorkerCount)
+			return nil
+		}))
+	}
+
+	if settings.EphemeralWorkerCount > 0 {
+		ensure(dir.Start(ctx, &director.Component{
+			Name:         "ejobs",
+			Critical:     true,
+			RestartDelay: time.Second,
+		}, func(ctx context.Context, quitf func(err error)) error {
+			app.StartEphemeralJobWorkers(ctx, settings.EphemeralWorkerCount, quitf)
+			log.Printf("%v: %d ephemeral job workers started.", settings.AppName, settings.EphemeralWorkerCount)
 			return nil
 		}))
 	}

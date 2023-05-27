@@ -32,7 +32,9 @@ type Settings struct {
 	BindPort int
 
 	// job options
-	WorkerCount int
+	WorkerCount           int
+	EphemeralWorkerCount  int
+	EphemeralQueueMaxSize int
 
 	// app options
 	AppName                  string // user-visible app name

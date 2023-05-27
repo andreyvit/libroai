@@ -6,13 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/andreyvit/buddyd/internal/flogger"
 	"github.com/andreyvit/buddyd/mvp/backoff"
 	"github.com/andreyvit/buddyd/mvp/mvpjobs"
-	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
 	"github.com/andreyvit/buddyd/mvp/mvprpc"
 	"github.com/andreyvit/edb"
 )
@@ -25,49 +23,6 @@ type JobImpl struct {
 	Method         *mvprpc.Method
 	Kind           *mvpjobs.Kind
 	RepeatInterval time.Duration
-}
-
-type InMemJobs struct {
-	mut sync.Mutex
-	m   map[string]bool
-	q   []func()
-}
-
-func initInMemJobs(app *App) {
-	app.inMemJobs.m = make(map[string]bool)
-}
-
-func (app *App) RunInMemJob(key string, f func(rc *RC) error) {
-	app.inMemJobs.mut.Lock()
-	defer app.inMemJobs.mut.Unlock()
-	if app.inMemJobs.m[key] {
-		return
-	}
-	app.inMemJobs.m[key] = true
-
-	if app.Settings.IsTesting {
-		app.executeInMemJob(key, f)
-	} else {
-		go app.executeInMemJob(key, f)
-	}
-}
-
-func (app *App) executeInMemJob(key string, f func(rc *RC) error) {
-	defer app.finishInMemJob(key)
-
-	rc := NewRC(context.Background(), app, "imj:"+key)
-	err := app.InTx(rc, mvpm.SafeWriter, func() error {
-		return f(rc)
-	})
-	if err != nil {
-		flogger.Log(rc, "ERROR: in-mem job failed: %v", key, err)
-	}
-}
-
-func (app *App) finishInMemJob(key string) {
-	app.inMemJobs.mut.Lock()
-	defer app.inMemJobs.mut.Unlock()
-	delete(app.inMemJobs.m, key)
 }
 
 func (app *App) Enqueue(rc *RC, kind *mvpjobs.Kind, in mvpjobs.Params) *mvpjobs.Job {

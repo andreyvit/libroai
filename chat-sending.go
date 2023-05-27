@@ -5,6 +5,9 @@ import (
 
 	"github.com/andreyvit/buddyd/internal/flogger"
 	m "github.com/andreyvit/buddyd/model"
+	"github.com/andreyvit/buddyd/mvp"
+	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
+	"github.com/andreyvit/edb"
 	"github.com/andreyvit/openai"
 )
 
@@ -20,45 +23,11 @@ func (app *App) ProduceBotMessage(rc *RC, chat *m.Chat, cc *m.ChatContent) (*m.M
 
 	// contextEntries, contextRanks := app.memory.Select(embedding)
 
-	pr, err := app.BuildSystemPrompt(rc, prompt1, chat, cc)
-	if err != nil {
-		return nil, err
-	}
-
-	flogger.Log(rc, "Prompt: %s", pr.Prompt)
-
-	var history []openai.Msg
-	history = append(history, openai.SystemMsg(pr.Prompt))
-	for _, t := range cc.Turns {
-		msg := t.LatestVersion()
-		history = append(history, openai.Msg{
-			Role:    msg.Role.OpenAIRole(),
-			Content: msg.Text,
-		})
-	}
-
-	opt := openai.DefaultChatOptions()
-	opt.Model = DefaultModel
-	opt.MaxTokens = MaxResponseTokenCount
-	opt.Temperature = 0.75
-
-	choices, usage, err := openai.Chat(rc, history, opt, app.httpClient, app.Settings().OpenAICreds)
-	if err != nil {
-		return nil, err
-	}
-	chat.Cost += openai.Cost(usage.PromptTokens, usage.CompletionTokens, opt.Model)
-
-	if len(choices) != 1 {
-		return nil, fmt.Errorf("len(choices) = %d", len(choices))
-	}
-	choice := choices[0]
-
+	turnIndex := len(cc.Turns)
 	msg := &m.Message{
-		ID:                app.NewID(),
-		Role:              m.MessageRoleBot,
-		Text:              choice.Content,
-		ContextContentIDs: pr.ContextContentIDs,
-		ContextDistances:  pr.ContextDistances,
+		ID:    app.NewID(),
+		Role:  m.MessageRoleBot,
+		State: m.MessageStatePending,
 	}
 	cc.Turns = append(cc.Turns, &m.Turn{
 		Role: m.MessageRoleBot,
@@ -67,5 +36,77 @@ func (app *App) ProduceBotMessage(rc *RC, chat *m.Chat, cc *m.ChatContent) (*m.M
 		},
 	})
 
+	chatID, msgID := chat.ID, msg.ID
+
+	app.EnqueueEphemeral(jobProduceAnswer, chat.ID.String(), func(rc *mvp.RC) error {
+		return app.produceBotMessage(fullRC.From(rc), chatID, turnIndex, msgID)
+	})
+
 	return msg, nil
+}
+
+func (app *App) produceBotMessage(rc *RC, chatID m.ChatID, turnIndex int, msgID m.MessageID) error {
+	var history []openai.Msg
+	err := app.InTx(&rc.RC, mvpm.SafeReader, func() error {
+		chat := edb.Get[m.Chat](rc, chatID)
+		cc := edb.Get[m.ChatContent](rc, chatID)
+
+		loadAccountEmbeddings(rc, false)
+		pr, err := app.BuildSystemPrompt(rc, prompt1, chat, cc)
+		if err != nil {
+			return err
+		}
+
+		flogger.Log(rc, "Prompt: %s", pr.Prompt)
+
+		history = append(history, openai.SystemMsg(pr.Prompt))
+		for _, t := range cc.Turns {
+			msg := t.LatestVersion()
+			history = append(history, openai.Msg{
+				Role:    msg.Role.OpenAIRole(),
+				Content: msg.Text,
+			})
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	opt := openai.DefaultChatOptions()
+	opt.Model = DefaultModel
+	opt.MaxTokens = MaxResponseTokenCount
+	opt.Temperature = 0.75
+
+	choices, usage, chatErr := openai.Chat(rc, history, opt, app.httpClient, app.Settings().OpenAICreds)
+	if chatErr == nil && len(choices) != 1 {
+		chatErr = fmt.Errorf("len(choices) = %d", len(choices))
+	}
+
+	err = app.InTx(&rc.RC, mvpm.SafeWriter, func() error {
+		chat := edb.Get[m.Chat](rc, chatID)
+		cc := edb.Get[m.ChatContent](rc, chatID)
+		msg := cc.Message(turnIndex, msgID)
+
+		chat.Cost += openai.Cost(usage.PromptTokens, usage.CompletionTokens, opt.Model)
+
+		if chatErr != nil {
+			msg.State = m.MessageStateFailed
+			edb.Put(rc, chat)
+			edb.Put(rc, cc)
+			return nil
+		}
+
+		choice := choices[0]
+		msg.Text = choice.Content
+		msg.State = m.MessageStateFinished
+		edb.Put(rc, chat)
+		edb.Put(rc, cc)
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
