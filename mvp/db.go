@@ -20,12 +20,6 @@ func FlakeIDType() reflect.Type {
 func initAppDB(app *App, opt *AppOptions) {
 	app.gen = flake.NewGen(0, 0)
 
-	for _, mod := range app.Settings.Configuration.Modules {
-		if mod.DBSchema != nil {
-			app.DBSchema.Include(mod.DBSchema)
-		}
-	}
-
 	if app.Settings.DataDir == "" {
 		app.Settings.DataDir = must(os.MkdirTemp("", "testdb*"))
 	}

@@ -13,6 +13,7 @@ import (
 
 	"github.com/andreyvit/buddyd/internal/postmark"
 	"github.com/andreyvit/buddyd/mvp/flake"
+	"github.com/andreyvit/buddyd/mvp/mvpjobs"
 	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
 	"github.com/andreyvit/edb"
 	"github.com/uptrace/bunrouter"
@@ -35,6 +36,7 @@ type AppBehaviors struct {
 type App struct {
 	ValueSet
 	DBSchema      edb.Schema
+	JobSchema     *mvpjobs.Schema
 	Configuration *Configuration
 	Settings      *Settings
 	Hooks         Hooks
@@ -55,13 +57,14 @@ type App struct {
 	db  *edb.DB
 	gen *flake.Gen
 
-	methods MethodRegistry
+	methodsByName map[string]*MethodImpl
+	jobsByKind    map[*mvpjobs.Kind]*JobImpl
+	inMemJobs     InMemJobs
 
 	postmrk *postmark.Caller
 
 	rateLimiters map[RateLimitPreset]map[RateLimitGranularity]*RateLimiter
 
-	inMemJobs InMemJobs
 	// rateLimiters map[string]
 }
 
@@ -96,6 +99,12 @@ func (app *App) Initialize(settings *Settings, opt AppOptions) {
 		app.BaseURL = must(url.Parse(settings.BaseURL))
 	}
 
+	app.JobSchema = &mvpjobs.Schema{}
+	app.addModule(builtinModule)
+	for _, mod := range app.Settings.Configuration.Modules {
+		app.addModule(mod)
+	}
+
 	initAppDB(app, &opt)
 	initViews(app, &opt)
 
@@ -119,6 +128,15 @@ func (app *App) Initialize(settings *Settings, opt AppOptions) {
 		if err != nil {
 			panic(fmt.Errorf("db init failed: %v", err))
 		}
+	}
+}
+
+func (app *App) addModule(mod *Module) {
+	if mod.DBSchema != nil {
+		app.DBSchema.Include(mod.DBSchema)
+	}
+	if app.JobSchema != nil {
+		app.JobSchema.Include(app.JobSchema)
 	}
 }
 

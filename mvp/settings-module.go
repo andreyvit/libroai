@@ -12,7 +12,7 @@ type Module struct {
 	SetupHooks  func(app *App)
 	LoadSecrets func(*Settings, Secrets)
 
-	DBSchema *edb.Schema
-	Jobs     *mvpjobs.Schema
-	Types    map[mvpm.Type][]string
+	DBSchema  *edb.Schema
+	JobSchema *mvpjobs.Schema
+	Types     map[mvpm.Type][]string
 }

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/andreyvit/buddyd/mvp/flake"
-	"github.com/andreyvit/buddyd/mvp/mvprpc"
 )
 
 type JobID = flake.ID
@@ -17,7 +16,6 @@ type Job struct {
 	RawParams json.RawMessage `msgpack:"p"`
 	// Streams   []string        `msgpack:"str,omitempty"`
 
-	OldStatus   int       `msgpack:"s,omitempty"`
 	Status      Status    `msgpack:"s2,omitempty"`
 	NextRunTime time.Time `msgpack:"rt,omitempty"`
 	Step        string    `msgpack:"sp,omitempty"`
@@ -55,24 +53,10 @@ func (kn KindName) IsAnonymous() bool {
 	return kn.Name == ""
 }
 
-type Schema struct {
-	kinds map[string]*Kind
-	byTag map[string][]*Kind
-	api   *mvprpc.API
-}
-
 type Set struct {
 	schema *Schema
 	name   string
 	kinds  map[string]*Kind
-}
-
-func NewSchema(name string) *Schema {
-	return &Schema{
-		kinds: make(map[string]*Kind),
-		byTag: make(map[string][]*Kind),
-		api:   mvprpc.NewAPI(name),
-	}
 }
 
 // func (schema *Schema) AddSet(setName string) *Set {

@@ -16,7 +16,9 @@ var validHTTPMethods = map[string]struct {
 }
 
 var (
-	rcPtrType    reflect.Type = reflect.TypeOf((*RC)(nil))
-	errorType    reflect.Type = reflect.TypeOf((*error)(nil)).Elem()
-	pathParamsRe              = regexp.MustCompile(`:(\w+)`)
+	emptyStructType                 = reflect.TypeOf(struct{}{})
+	emptyStructPtrType              = reflect.TypeOf((*struct{})(nil))
+	rcPtrType          reflect.Type = reflect.TypeOf((*RC)(nil))
+	errorType          reflect.Type = reflect.TypeOf((*error)(nil)).Elem()
+	pathParamsRe                    = regexp.MustCompile(`:(\w+)`)
 )

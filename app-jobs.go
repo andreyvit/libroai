@@ -1,10 +1,13 @@
 package main
 
-import "github.com/andreyvit/buddyd/mvp"
-
-var (
-// jobProduceAnswer =
+import (
+	"github.com/andreyvit/buddyd/mvp"
+	"github.com/andreyvit/buddyd/mvp/mvpjobs"
 )
 
-func (app *App) registerJobs(b *mvp.RouteBuilder) {
+var (
+	jobProduceAnswer = jobSchema.Define("ProduceAnswer", nil, mvpjobs.Repeatable)
+)
+
+func (app *App) registerJobs(b mvp.JobRegistry) {
 }

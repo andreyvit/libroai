@@ -20,11 +20,10 @@ type API struct {
 	methodsByNameCI map[string]*Method
 }
 
-func NewAPI(name string) *API {
-	return &API{
-		Name:            name,
-		methodsByName:   make(map[string]*Method),
-		methodsByNameCI: make(map[string]*Method),
+func (api *API) init() {
+	if api.methodsByName == nil {
+		api.methodsByName = make(map[string]*Method)
+		api.methodsByNameCI = make(map[string]*Method)
 	}
 }
 
@@ -40,6 +39,7 @@ type Method struct {
 }
 
 func (api *API) Method(name string, in any, out any, opts ...any) *Method {
+	api.init()
 	if in == nil {
 		in = &struct{}{}
 	}

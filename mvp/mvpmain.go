@@ -126,5 +126,17 @@ func Main(ge *Configuration) {
 		return err
 	}))
 
+	if settings.WorkerCount > 0 {
+		ensure(dir.Start(ctx, &director.Component{
+			Name:         "jobs",
+			Critical:     true,
+			RestartDelay: time.Second,
+		}, func(ctx context.Context, quitf func(err error)) error {
+			app.StartJobWorkers(ctx, settings.WorkerCount, quitf)
+			log.Printf("%v: %d job workers started.", settings.AppName, settings.WorkerCount)
+			return nil
+		}))
+	}
+
 	dir.Wait()
 }

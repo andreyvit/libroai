@@ -14,7 +14,8 @@ var (
 	fullApp      = expandable.Derive[App](appSchema, mvp.BaseApp).WithNew(newApp)
 	fullRC       = expandable.Derive[RC](appSchema, mvp.BaseRC)
 
-	dbSchema = &edb.Schema{}
+	dbSchema  = &edb.Schema{}
+	jobSchema = &mvpjobs.Schema{}
 )
 
 var AppModule = &mvp.Module{
@@ -22,9 +23,9 @@ var AppModule = &mvp.Module{
 	SetupHooks: fullApp.Wrap(setupHooks),
 	LoadSecrets: func(*mvp.Settings, mvp.Secrets) {
 	},
-	DBSchema: dbSchema,
-	Jobs:     &mvpjobs.Schema{},
-	Types:    map[mvpm.Type][]string{},
+	DBSchema:  dbSchema,
+	JobSchema: jobSchema,
+	Types:     map[mvpm.Type][]string{},
 }
 
 func setupHooks(app *App) {

@@ -32,25 +32,22 @@ func (k *Kind) AllowNames() bool {
 	return !k.IsCron()
 }
 
-func (schema *Schema) Kinds() []*Kind {
-	kinds := make([]*Kind, 0, len(schema.kinds))
-	for _, kind := range schema.kinds {
+func (scm *Schema) Kinds() []*Kind {
+	kinds := make([]*Kind, 0, len(scm.kinds))
+	for _, kind := range scm.kinds {
 		kinds = append(kinds, kind)
 	}
 	return kinds
 }
 
-func (schema *Schema) Define(kindName string, in any, behavior Behavior, opts ...any) *Kind {
+func (scm *Schema) Define(kindName string, in any, behavior Behavior, opts ...any) *Kind {
+	scm.init()
 	kind := &Kind{
-		schema:   schema,
+		schema:   scm,
 		Behavior: behavior,
 		Name:     kindName,
-		Method:   schema.api.Method("Job"+kindName, in, nil),
+		Method:   scm.api.Method("Job"+kindName, in, nil),
 	}
-	if schema.kinds[kindName] != nil {
-		panic(fmt.Errorf("duplicate kind %q", kindName))
-	}
-	schema.kinds[kindName] = kind
 	for _, opt := range opts {
 		switch opt := opt.(type) {
 		case Persistence:
@@ -60,13 +57,16 @@ func (schema *Schema) Define(kindName string, in any, behavior Behavior, opts ..
 		}
 	}
 	// for _, tag := range strings.Fields(tags) {
-	// 	schema.byTag[tag] = append(schema.byTag[tag], kind)
+	// 	scm.byTag[tag] = append(scm.byTag[tag], kind)
 	// }
+
+	scm.addKind(kind)
+
 	return kind
 }
 
-func (schema *Schema) Cron(kindName string, interval time.Duration, opts ...any) *Kind {
-	kind := schema.Define(kindName, &NoParams{}, Cron, opts...)
+func (scm *Schema) Cron(kindName string, interval time.Duration, opts ...any) *Kind {
+	kind := scm.Define(kindName, &NoParams{}, Cron, opts...)
 	kind.RepeatInterval = interval
 	return kind
 }
