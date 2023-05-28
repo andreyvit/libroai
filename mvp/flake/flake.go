@@ -172,6 +172,10 @@ const (
 	nodeAndSeqMask uint64 = (2 << (nodeBits + seqBits)) - 1
 )
 
+func MinAt(tm time.Time) ID {
+	return Build(MillisecondsFromTime(tm), 0, 0)
+}
+
 func Build(ms uint64, node uint64, seq uint64) ID {
 	if node > nodeMask {
 		panic(fmt.Sprintf("node value too large: %d", node))

@@ -14,6 +14,7 @@ import (
 	"github.com/andreyvit/buddyd/internal/postmark"
 	"github.com/andreyvit/buddyd/mvp/flake"
 	"github.com/andreyvit/buddyd/mvp/mvpjobs"
+	"github.com/andreyvit/buddyd/mvp/mvplive"
 	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
 	"github.com/andreyvit/edb"
 	"github.com/uptrace/bunrouter"
@@ -60,6 +61,7 @@ type App struct {
 	methodsByName     map[string]*MethodImpl
 	jobsByKind        map[*mvpjobs.Kind]*JobImpl
 	ephemeralJobQueue EphemeralJobQueue
+	liveQueue         *mvplive.Queue
 
 	postmrk *postmark.Caller
 
@@ -100,6 +102,7 @@ func (app *App) Initialize(settings *Settings, opt AppOptions) {
 	}
 
 	app.initEphemeralJobs()
+	app.initLive()
 
 	app.JobSchema = &mvpjobs.Schema{}
 	app.addModule(builtinModule)

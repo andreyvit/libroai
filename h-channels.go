@@ -1,28 +1,25 @@
 package main
 
 import (
-	"fmt"
-	"time"
-
+	m "github.com/andreyvit/buddyd/model"
 	"github.com/andreyvit/buddyd/mvp"
-	"github.com/andreyvit/buddyd/mvp/hotwired"
+	"github.com/andreyvit/buddyd/mvp/flake"
+	"github.com/andreyvit/buddyd/mvp/mvplive"
+)
+
+var (
+	chatChannelFamily = &mvplive.ChannelFamily{
+		Name: "chat",
+	}
 )
 
 func (app *App) handleChatEventStream(rc *mvp.RC, in *struct {
-	LastEventID uint64 `form:"Last-Event-ID,header,optional" json:"-"`
+	ChatID      m.ChatID `form:"chat,path" json:"-"`
+	LastEventID uint64   `form:"Last-Event-ID,header,optional" json:"-"`
 }) (any, error) {
-	var n uint64 = 1
-
-	if in.LastEventID != 0 {
-		n = in.LastEventID + 1
-	}
-
-	for rc.Err() == nil {
-		rc.SendTurboStream(n, func(stream *hotwired.Stream) {
-			stream.Append("message-list", fmt.Sprintf("<div>%d</div>", n))
-		})
-		n++
-		time.Sleep(time.Second)
-	}
+	app.Subscribe(rc, rc, rc.RespWriter, mvplive.Channel{
+		Family: chatChannelFamily,
+		Topic:  in.ChatID.String(),
+	}, flake.ID(in.LastEventID))
 	return mvp.ResponseHandled{}, nil
 }

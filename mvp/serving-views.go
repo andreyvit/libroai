@@ -41,21 +41,28 @@ func (app *App) ExecTemplate(w io.Writer, templateName string, data any) error {
 	return t.ExecuteTemplate(w, templateName, data)
 }
 
+func (app *App) RenderPartial(rc *RC, view string, data any) template.HTML {
+	vd := &ViewData{
+		View: view,
+		Data: data,
+	}
+	app.fillViewData(vd, rc)
+
+	var buf strings.Builder
+	err := app.freshTemplates(rc).ExecuteTemplate(&buf, view, &RenderData{Data: data, ViewData: vd})
+	if err != nil {
+		flogger.Log(rc, "FATAL: partial rendering failed: %v: %v", view, err)
+		panic(fmt.Sprintf("partial rendering failed: %v: %v", view, err))
+	}
+	return template.HTML(buf.String())
+}
+
 func (app *App) Render(lc flogger.Context, data *ViewData) ([]byte, error) {
 	if data.Layout == "" {
 		data.Layout = "default"
 	}
 
-	t := app.templates
-	if app.Settings.ServeAssetsFromDisk {
-		flogger.Log(lc, "reloading templates from disk")
-		var err error
-		t, err = app.loadTemplates()
-		if err != nil {
-			panic(fmt.Errorf("reloading templates: %v", err))
-		}
-		app.templatesDev.Store(t)
-	}
+	t := app.freshTemplates(lc)
 
 	rdata := &RenderData{Data: data.Data, ViewData: data}
 
@@ -76,6 +83,20 @@ func (app *App) Render(lc flogger.Context, data *ViewData) ([]byte, error) {
 		return nil, err
 	}
 	return buf2.Bytes(), nil
+}
+
+func (app *App) freshTemplates(lc flogger.Context) *template.Template {
+	if app.Settings.ServeAssetsFromDisk {
+		flogger.Log(lc, "reloading templates from disk")
+		t, err := app.loadTemplates()
+		if err != nil {
+			panic(fmt.Errorf("reloading templates: %v", err))
+		}
+		app.templatesDev.Store(t)
+		return t
+	} else {
+		return app.templates
+	}
 }
 
 type templDef struct {

@@ -21,6 +21,13 @@ var _messageStateStrings = []string{
 	"failed",
 }
 
+func (v MessageState) IsPending() bool {
+	return v == MessageStatePending
+}
+func (v MessageState) IsFailed() bool {
+	return v == MessageStateFailed
+}
+
 func (v MessageState) String() string {
 	return _messageStateStrings[v]
 }

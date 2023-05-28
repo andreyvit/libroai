@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+
+	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
 )
 
-type URLGenOption int
-
-const Absolute = URLGenOption(1)
+var (
+	Absolute = mvpm.NewURLOption("absolute")
+)
 
 type PathParamsMapAny map[string]any
 
@@ -81,7 +83,7 @@ func (app *App) URL(name string, extras ...any) string {
 				}
 				g.PathKeys[extra] = fmt.Sprint(extras[i])
 			}
-		case URLGenOption:
+		case mvpm.URLOption:
 			if extra == Absolute {
 				g.Absolute = true
 			}

@@ -17,8 +17,9 @@ type Chat struct {
 }
 
 type ChatContent struct {
-	ChatID ChatID  `msgpack:"-"`
-	Turns  []*Turn `msgpack:"t"`
+	ChatID      ChatID  `msgpack:"-"`
+	Turns       []*Turn `msgpack:"t"`
+	LastEventID uint64  `msgpack:"le"`
 }
 
 func (cc *ChatContent) FirstUserMessage() *Message {
@@ -89,6 +90,10 @@ type Message struct {
 	ContextDistances  []float64    `msgpack:"cd,omitempty"`
 }
 
+func (msg *Message) HTMLElementID() string {
+	return "message_" + msg.ID.String()
+}
+
 type ChatVM struct {
 	*Chat
 	Messages []*MessageVM
@@ -96,6 +101,8 @@ type ChatVM struct {
 
 type MessageVM struct {
 	*Message
+	ChatID    ChatID
+	TurnIndex int
 }
 
 func (m *MessageVM) Paragraphs() []string {
@@ -107,11 +114,17 @@ func WrapChat(chat *Chat, content *ChatContent) *ChatVM {
 		Chat:     chat,
 		Messages: make([]*MessageVM, 0, len(content.Turns)),
 	}
-	for _, t := range content.Turns {
+	for ti, t := range content.Turns {
 		msg := t.LatestVersion()
-		chatVM.Messages = append(chatVM.Messages, &MessageVM{
-			Message: msg,
-		})
+		chatVM.Messages = append(chatVM.Messages, WrapMessage(msg, chat.ID, ti))
 	}
 	return chatVM
+}
+
+func WrapMessage(msg *Message, chatID ChatID, turnIndex int) *MessageVM {
+	return &MessageVM{
+		Message:   msg,
+		ChatID:    chatID,
+		TurnIndex: turnIndex,
+	}
 }

@@ -62,8 +62,7 @@ func (rc *RC) SendTurboStream(id uint64, f func(stream *hotwired.Stream)) {
 }
 
 func (rc *RC) SendSSE(msg *sse.Msg) {
-	header := rc.RespWriter.Header()
-	header.Set("Content-Type", sse.ContentType)
+	rc.RespWriter.Header().Set("Content-Type", sse.ContentType)
 
 	_, err := rc.RespWriter.Write(msg.Encode(nil))
 	if err != nil {

@@ -6,6 +6,8 @@ import (
 	"github.com/andreyvit/buddyd/internal/flogger"
 	m "github.com/andreyvit/buddyd/model"
 	"github.com/andreyvit/buddyd/mvp"
+	"github.com/andreyvit/buddyd/mvp/hotwired"
+	"github.com/andreyvit/buddyd/mvp/mvplive"
 	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
 	"github.com/andreyvit/edb"
 	"github.com/andreyvit/openai"
@@ -92,16 +94,27 @@ func (app *App) produceBotMessage(rc *RC, chatID m.ChatID, turnIndex int, msgID 
 
 		if chatErr != nil {
 			msg.State = m.MessageStateFailed
-			edb.Put(rc, chat)
-			edb.Put(rc, cc)
-			return nil
+		} else {
+			choice := choices[0]
+			msg.Text = choice.Content
+			msg.State = m.MessageStateFinished
 		}
-
-		choice := choices[0]
-		msg.Text = choice.Content
-		msg.State = m.MessageStateFinished
+		cc.LastEventID++
+		eventID := cc.LastEventID
 		edb.Put(rc, chat)
 		edb.Put(rc, cc)
+
+		content := app.RenderPartial(&rc.RC, "chat/_message", m.WrapMessage(msg, chatID, turnIndex))
+		app.PublishTurbo(mvplive.Channel{
+			Family: chatChannelFamily,
+			Topic:  chat.ID.String(),
+		}, mvplive.Envelope{
+			EventID:  eventID,
+			DedupKey: msg.ID.String(),
+		}, func(stream *hotwired.Stream) {
+			stream.Replace(msg.HTMLElementID(), string(content))
+		})
+
 		return nil
 	})
 	if err != nil {

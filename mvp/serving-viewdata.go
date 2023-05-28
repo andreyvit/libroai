@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
+
+	"github.com/andreyvit/buddyd/internal/flogger"
 )
 
 type ViewData struct {
@@ -35,6 +37,10 @@ func (vd *ViewData) IsActive(path string) bool {
 }
 
 func (vd *ViewData) BaseRC() *RC {
+	return vd.baseRC
+}
+
+func (vd *ViewData) LC() flogger.Context {
 	return vd.baseRC
 }
 

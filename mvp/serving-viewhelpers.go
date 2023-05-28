@@ -3,14 +3,16 @@ package mvp
 import (
 	"fmt"
 	"html/template"
-	"io/fs"
+	"regexp"
 	"strings"
+	"unicode/utf8"
+
+	"github.com/andreyvit/buddyd/internal/flogger"
 )
 
 func (app *App) registerBuiltinViewHelpers(m template.FuncMap) {
 	m["c_link"] = app.renderLink
-	m["c_svg"] = app.renderSVG
-	m["c_icon"] = app.renderSVG
+	m["c_icon"] = app.renderIcon
 	m["attr"] = Attr
 	m["attrs"] = func(attrs any) template.HTMLAttr {
 		switch attrs := attrs.(type) {
@@ -139,7 +141,7 @@ func (app *App) renderLink(data *RenderData) template.HTML {
 
 	var iconStr template.HTML
 	if iconAttr != "" {
-		iconStr = app.renderSVG(data.Bind(nil, "class", JoinClasses("icon", iconClass), "src", iconAttr))
+		iconStr = app.renderIcon(data.Bind(nil, "class", JoinClasses("icon", iconClass), "src", iconAttr))
 		classes = append(classes, "with-icon")
 	}
 
@@ -173,7 +175,7 @@ func (app *App) renderLink(data *RenderData) template.HTML {
 	}
 }
 
-func (app *App) renderSVG(data *RenderData) template.HTML {
+func (app *App) renderIcon(data *RenderData) template.HTML {
 	var src string
 	var srcFound bool
 	var extraArgs strings.Builder
@@ -192,37 +194,38 @@ func (app *App) renderSVG(data *RenderData) template.HTML {
 		return ""
 	}
 
-	var raw []byte
-	// if name, ok := strings.CutPrefix(src, bm.UploadedURIPrefix); ok {
-	// 	if !strings.HasSuffix(src, ".svg") {
-	// 		return "(non-SVG)"
-	// 	}
-	// 	var err error
-	// 	raw, err = app.ReadUploadedFile(name)
-	// 	if err != nil {
-	// 		log.Printf("missing uploaded file %q", name)
-	// 		return ""
-	// 	}
-	// } else {
-	var err error
-	raw, err = fs.ReadFile(app.staticFS, src)
-	if err != nil {
-		panic(fmt.Errorf("<c-svg>: cannot find %s under static/", src))
-	}
-	// }
-	body := string(raw)
-
-	if extraArgs.Len() > 0 {
-		i := strings.Index(body, "<svg ")
-		if i < 0 {
-			panic(fmt.Errorf("<c-icon>: %s: cannot find <svg> opening tag", src))
+	if strings.HasSuffix(src, ".svg") {
+		raw, err := data.BaseRC().ReadFile(src)
+		if err != nil {
+			flogger.Log(data.LC(), "WARNING: <c-icon>: %v", err)
+			return ""
 		}
-		body = strings.Replace(body, ` xmlns="http://www.w3.org/2000/svg"`, ``, 1)
 
-		body = body[:i+4] + extraArgs.String() + body[i+4:]
+		svgStart := svgStartRe.FindSubmatchIndex(raw)
+		if !utf8.Valid(raw) || svgStart == nil {
+			flogger.Log(data.LC(), "WARNING: <c-icon>: %s is not an SVG", src)
+			return ""
+		}
+		body := string(raw)
+
+		if extraArgs.Len() > 0 {
+			i := svgStart[3]
+			body = body[:i] + extraArgs.String() + body[i:]
+		}
+		body = strings.Replace(body, `xmlns="http://www.w3.org/2000/svg"`, ``, 1)
+		return template.HTML(body)
+	} else {
+		url := data.BaseRC().FileURL(src, 0)
+		if url == "" {
+			flogger.Log(data.LC(), "WARNING: <c-icon>: cannot create URL for %q", src)
+			return ""
+		}
+
+		return template.HTML(fmt.Sprintf(`<img src="%s"%s>`, url, extraArgs.String()))
 	}
-	return template.HTML(body)
 }
+
+var svgStartRe = regexp.MustCompile(`(<svg)\s`)
 
 func IsFalsy(value any) bool {
 	return value == nil || value == "" || value == false
