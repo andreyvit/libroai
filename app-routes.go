@@ -1,6 +1,6 @@
 package main
 
-import "github.com/andreyvit/buddyd/mvp"
+import "github.com/andreyvit/mvp"
 
 func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 	b.Static("/static")

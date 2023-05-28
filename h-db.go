@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/andreyvit/buddyd/internal/httperrors"
-	"github.com/andreyvit/buddyd/mvp"
 	"github.com/andreyvit/edb"
+	"github.com/andreyvit/mvp"
+	"github.com/andreyvit/mvp/httperrors"
 )
 
 type ObjectMeta1 struct {

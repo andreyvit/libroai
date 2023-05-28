@@ -5,9 +5,9 @@ import (
 	"html/template"
 	"strings"
 
-	"github.com/andreyvit/buddyd/internal/httperrors"
-	"github.com/andreyvit/buddyd/mvp"
-	"github.com/andreyvit/buddyd/mvp/forms"
+	"github.com/andreyvit/mvp"
+	"github.com/andreyvit/mvp/forms"
+	"github.com/andreyvit/mvp/httperrors"
 )
 
 type Procedure struct {

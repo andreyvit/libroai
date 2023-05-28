@@ -10,10 +10,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/andreyvit/buddyd/internal/flogger"
-	m "github.com/andreyvit/buddyd/model"
-	"github.com/andreyvit/buddyd/mvp/forms"
 	"github.com/andreyvit/edb"
+	"github.com/andreyvit/mvp/flogger"
+	"github.com/andreyvit/mvp/forms"
+
+	m "github.com/andreyvit/buddyd/model"
 )
 
 func (app *App) importProcedure() *Procedure {

@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/andreyvit/buddyd/mvp"
-	d "github.com/andreyvit/buddyd/mvp/deploymentutil"
+	"github.com/andreyvit/mvp"
+	d "github.com/andreyvit/mvp/deploymentutil"
 )
 
 func preinstallConfigs(baseSettings *mvp.Settings) {

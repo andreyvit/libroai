@@ -3,11 +3,12 @@ package main
 import (
 	"sort"
 
-	"github.com/andreyvit/buddyd/internal/httperrors"
-	m "github.com/andreyvit/buddyd/model"
-	"github.com/andreyvit/buddyd/mvp"
 	"github.com/andreyvit/edb"
+	"github.com/andreyvit/mvp"
+	"github.com/andreyvit/mvp/httperrors"
 	"golang.org/x/exp/maps"
+
+	m "github.com/andreyvit/buddyd/model"
 )
 
 func (app *App) showLibraryRootFolder(rc *RC, in *struct{}) (*mvp.ViewData, error) {

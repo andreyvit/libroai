@@ -13,12 +13,12 @@ import (
 	"github.com/andreyvit/openai"
 	"golang.org/x/time/rate"
 
-	"github.com/andreyvit/buddyd/internal/accesstokens"
+	"github.com/andreyvit/mvp"
+	"github.com/andreyvit/mvp/jsonext"
+	"github.com/andreyvit/mvp/jwt"
+	mvpm "github.com/andreyvit/mvp/mvpmodel"
+
 	m "github.com/andreyvit/buddyd/model"
-	"github.com/andreyvit/buddyd/mvp"
-	"github.com/andreyvit/buddyd/mvp/jsonext"
-	"github.com/andreyvit/buddyd/mvp/jwt"
-	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
 )
 
 // -ldflags "-X main.BuildCommit=$(git rev-parse HEAD) -X main.BuildVer=$(git describe --long --dirty)
@@ -92,7 +92,6 @@ type DeploymentSettings struct {
 type App struct {
 	mvp.App
 	users                atomic.Value
-	webAdminTokens       accesstokens.Configuration
 	httpClient           *http.Client
 	dangerousRateLimiter *rate.Limiter
 }

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/andreyvit/buddyd/mvp"
-	"github.com/andreyvit/buddyd/mvp/expandable"
-	"github.com/andreyvit/buddyd/mvp/mvpjobs"
-	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
 	"github.com/andreyvit/edb"
+	"github.com/andreyvit/mvp"
+	"github.com/andreyvit/mvp/expandable"
+	"github.com/andreyvit/mvp/mvpjobs"
+	mvpm "github.com/andreyvit/mvp/mvpmodel"
 )
 
 var (

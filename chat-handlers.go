@@ -3,12 +3,13 @@ package main
 import (
 	"fmt"
 
-	"github.com/andreyvit/buddyd/internal/flogger"
-	m "github.com/andreyvit/buddyd/model"
-	"github.com/andreyvit/buddyd/mvp"
-	"github.com/andreyvit/buddyd/mvp/flake"
 	"github.com/andreyvit/edb"
+	"github.com/andreyvit/mvp"
+	"github.com/andreyvit/mvp/flake"
+	"github.com/andreyvit/mvp/flogger"
 	"github.com/andreyvit/openai"
+
+	m "github.com/andreyvit/buddyd/model"
 )
 
 func (app *App) showNewChat(rc *RC, in *struct{}) (*mvp.ViewData, error) {

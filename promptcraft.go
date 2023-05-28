@@ -3,9 +3,10 @@ package main
 import (
 	"strings"
 
-	"github.com/andreyvit/buddyd/internal/flogger"
-	m "github.com/andreyvit/buddyd/model"
 	"github.com/andreyvit/edb"
+	"github.com/andreyvit/mvp/flogger"
+
+	m "github.com/andreyvit/buddyd/model"
 )
 
 const (

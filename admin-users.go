@@ -5,10 +5,11 @@ import (
 	"sort"
 	"strings"
 
-	m "github.com/andreyvit/buddyd/model"
-	"github.com/andreyvit/buddyd/mvp"
-	"github.com/andreyvit/buddyd/mvp/forms"
 	"github.com/andreyvit/edb"
+	"github.com/andreyvit/mvp"
+	"github.com/andreyvit/mvp/forms"
+
+	m "github.com/andreyvit/buddyd/model"
 )
 
 func (app *App) handleAdminWhitelist(rc *mvp.RC, in *struct {

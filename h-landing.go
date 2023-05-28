@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/andreyvit/buddyd/mvp"
+	"github.com/andreyvit/mvp"
 )
 
 func (app *App) showLandingHome(rc *mvp.RC, in *struct{}) (*mvp.ViewData, error) {

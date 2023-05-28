@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/andreyvit/buddyd/internal/flogger"
-	m "github.com/andreyvit/buddyd/model"
 	"github.com/andreyvit/edb"
+	"github.com/andreyvit/mvp/flogger"
 	"golang.org/x/exp/slices"
+
+	m "github.com/andreyvit/buddyd/model"
 )
 
 func loadAccountEmbeddings(rc *RC, reload bool) {

@@ -3,14 +3,15 @@ package main
 import (
 	"fmt"
 
-	"github.com/andreyvit/buddyd/internal/flogger"
-	m "github.com/andreyvit/buddyd/model"
-	"github.com/andreyvit/buddyd/mvp"
-	"github.com/andreyvit/buddyd/mvp/hotwired"
-	"github.com/andreyvit/buddyd/mvp/mvplive"
-	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
 	"github.com/andreyvit/edb"
+	"github.com/andreyvit/mvp"
+	"github.com/andreyvit/mvp/flogger"
+	"github.com/andreyvit/mvp/hotwired"
+	"github.com/andreyvit/mvp/mvplive"
+	mvpm "github.com/andreyvit/mvp/mvpmodel"
 	"github.com/andreyvit/openai"
+
+	m "github.com/andreyvit/buddyd/model"
 )
 
 func (app *App) ProduceBotMessage(rc *RC, chat *m.Chat, cc *m.ChatContent) (*m.Message, error) {

@@ -1,9 +1,10 @@
 package main
 
 import (
-	m "github.com/andreyvit/buddyd/model"
-	"github.com/andreyvit/buddyd/mvp"
 	"github.com/andreyvit/edb"
+	"github.com/andreyvit/mvp"
+
+	m "github.com/andreyvit/buddyd/model"
 )
 
 func (app *App) showModerationHome(rc *mvp.RC, in *struct{}) (*mvp.ViewData, error) {

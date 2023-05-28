@@ -3,7 +3,7 @@ package m
 import (
 	"fmt"
 
-	"github.com/andreyvit/buddyd/mvp/flake"
+	"github.com/andreyvit/mvp/flake"
 )
 
 type ItemID = flake.ID

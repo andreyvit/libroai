@@ -3,11 +3,12 @@ package main
 import (
 	"fmt"
 
-	"github.com/andreyvit/buddyd/internal/flogger"
-	m "github.com/andreyvit/buddyd/model"
-	"github.com/andreyvit/buddyd/mvp"
-	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
 	"github.com/andreyvit/edb"
+	"github.com/andreyvit/mvp"
+	"github.com/andreyvit/mvp/flogger"
+	mvpm "github.com/andreyvit/mvp/mvpmodel"
+
+	m "github.com/andreyvit/buddyd/model"
 )
 
 func resetAuth(app *App, rc *RC) {

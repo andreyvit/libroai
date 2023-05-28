@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/andreyvit/buddyd/mvp"
-	"github.com/andreyvit/buddyd/mvp/mvpjobs"
+	"github.com/andreyvit/mvp"
+	"github.com/andreyvit/mvp/mvpjobs"
 )
 
 var (

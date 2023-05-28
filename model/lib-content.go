@@ -1,6 +1,6 @@
 package m
 
-import "github.com/andreyvit/buddyd/mvp/flake"
+import "github.com/andreyvit/mvp/flake"
 
 type ContentID = flake.ID
 

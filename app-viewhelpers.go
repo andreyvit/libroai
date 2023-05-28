@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"html/template"
 
+	"github.com/andreyvit/mvp"
+	mvpm "github.com/andreyvit/mvp/mvpmodel"
+
 	m "github.com/andreyvit/buddyd/model"
-	"github.com/andreyvit/buddyd/mvp"
-	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
 )
 
 func (app *App) registerViewHelpers(funcs template.FuncMap) {

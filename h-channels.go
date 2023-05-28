@@ -1,10 +1,11 @@
 package main
 
 import (
+	"github.com/andreyvit/mvp"
+	"github.com/andreyvit/mvp/flake"
+	"github.com/andreyvit/mvp/mvplive"
+
 	m "github.com/andreyvit/buddyd/model"
-	"github.com/andreyvit/buddyd/mvp"
-	"github.com/andreyvit/buddyd/mvp/flake"
-	"github.com/andreyvit/buddyd/mvp/mvplive"
 )
 
 var (

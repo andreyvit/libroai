@@ -3,7 +3,7 @@ package m
 import (
 	"strings"
 
-	"github.com/andreyvit/buddyd/mvp/flake"
+	"github.com/andreyvit/mvp/flake"
 	"github.com/andreyvit/openai"
 )
 

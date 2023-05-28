@@ -1,6 +1,6 @@
 package main
 
-import "github.com/andreyvit/buddyd/mvp/forms"
+import "github.com/andreyvit/mvp/forms"
 
 func saveFormButtonBar() forms.Child {
 	return &forms.Wrapper{

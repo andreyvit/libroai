@@ -4,8 +4,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/andreyvit/buddyd/mvp/flake"
-	mvpm "github.com/andreyvit/buddyd/mvp/mvpmodel"
+	"github.com/andreyvit/mvp/flake"
+	mvpm "github.com/andreyvit/mvp/mvpmodel"
 )
 
 type UserID = flake.ID

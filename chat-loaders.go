@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/andreyvit/buddyd/internal/flogger"
-	"github.com/andreyvit/buddyd/internal/httperrors"
-	m "github.com/andreyvit/buddyd/model"
 	"github.com/andreyvit/edb"
+	"github.com/andreyvit/mvp/flogger"
+	"github.com/andreyvit/mvp/httperrors"
+
+	m "github.com/andreyvit/buddyd/model"
 )
 
 func loadChat(rc *RC, chatID m.ChatID, allowNew bool) (*m.Chat, error) {

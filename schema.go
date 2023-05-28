@@ -1,9 +1,10 @@
 package main
 
 import (
-	m "github.com/andreyvit/buddyd/model"
-	"github.com/andreyvit/buddyd/mvp/flake"
 	"github.com/andreyvit/edb"
+	"github.com/andreyvit/mvp/flake"
+
+	m "github.com/andreyvit/buddyd/model"
 )
 
 var (
