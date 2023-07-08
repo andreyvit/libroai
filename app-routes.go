@@ -6,7 +6,7 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 	b.Static("/static")
 
 	b.UseIn("authenticate", app.AuthenticateRequestMiddleware)
-	b.Use(fullRC.WrapAE(app.initAccountMiddleware))
+	b.Use(app.initAccountMiddleware)
 
 	b.Route("landing.home", "GET /", app.showLandingHome)
 	b.Route("landing.signup", "POST /start", app.handleLandingSignup)
@@ -19,20 +19,20 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 	b.Route("accountpicker", "GET /pick-account/", app.showPickAccountForm)
 
 	b.Group("/chat", func(b *mvp.RouteBuilder) {
-		b.UseIn("authorize", fullRC.WrapAE(requireLoggedIn))
-		b.Use(fullRC.WrapAE(loadUserChatListMiddleware))
+		b.UseIn("authorize", requireLoggedIn)
+		b.Use(loadUserChatListMiddleware)
 
 		b.Route("chat.home", "GET /", app.showNewChat)
 		b.Route("chat.view", "GET /c/:chat", app.showChat)
 		b.Route("chat.messages.send", "POST /c/:chat/send", app.sendChatMessage)
-		b.Route("chat.messages.vote", "POST /c/:chat/vote", app.voteChatResponse)
+		b.Route("chat.messages.mark", "POST /c/:chat/m/:message/mark", app.markChatMessage)
 
 		b.Route("chat.sse", "GET /c/:chat/events/", app.handleChatEventStream).UseIn("authorize", nil)
 	})
 
 	b.Group("/lib", func(b *mvp.RouteBuilder) {
-		b.UseIn("authorize", fullRC.WrapAE(requireAdmin))
-		b.Use(fullRC.WrapAE(loadAccountLibraryMiddleware))
+		b.UseIn("authorize", requireAdmin)
+		b.Use(loadAccountLibraryMiddleware)
 
 		b.Route("lib.home", "GET /", app.showLibraryRootFolder)
 		b.Route("lib.folder", "GET /folders/:folder/", app.showLibraryFolder)
@@ -40,13 +40,13 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 	})
 
 	b.Group("/mod", func(b *mvp.RouteBuilder) {
-		b.UseIn("authorize", fullRC.WrapAE(requireAdmin))
+		b.UseIn("authorize", requireAdmin)
 
-		b.Route("mod.home", "GET /", app.showModerationHome)
+		b.Route("mod.home", "GET /", app.showModerationHome).Use(loadAllChatListMiddleware)
 	})
 
 	b.Group("/admin", func(b *mvp.RouteBuilder) {
-		b.UseIn("authorize", fullRC.WrapAE(requireAdmin))
+		b.UseIn("authorize", requireAdmin)
 
 		b.Route("admin.home", "GET /", app.showAdminHome)
 		b.Route("admin.whitelist", "GET /whitelist/", app.handleAdminWhitelist)
@@ -54,9 +54,9 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 	})
 
 	b.Group("/superadmin", func(b *mvp.RouteBuilder) {
-		b.UseIn("authorize", fullRC.WrapAE(requireSuperadmin))
+		b.UseIn("authorize", requireSuperadmin)
 
-		b.Route("superadmin.home", "GET /", app.showSuperadminHome)
+		b.Route("superadmin.accounts", "GET /", app.listSuperadminAccounts)
 		// b.Route("superadmin.superadmins.save", "POST /superadmins/", app.saveSuperadmin)
 
 		b.Group("/maintenance", func(b *mvp.RouteBuilder) {

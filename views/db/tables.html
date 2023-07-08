@@ -1,11 +1,7 @@
-<div class="stack space-y-6">
-  <h1 class="text-3xl flex gap-2">
-    <span>db</span>
-  </h1>
-
+<div class="grid grid-cols-autofill-flex-36 gap-4">
   {{range .Tables}}
-  <div class="Table">
-    <h2><c-link route="db.table.list" table={{.Name}}>{{.Name}}</c-link></h2>
-  </div>
+  <c-link class="Table block | p-2 | border hover:border-black transition-colors rounded" route="db.table.list" table={{.Name}}>
+    {{.Name}}
+  </c-link>
   {{end}}
 </div>

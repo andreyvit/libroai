@@ -8,17 +8,14 @@ import (
 	m "github.com/andreyvit/buddyd/model"
 )
 
-func loadAccountEmbeddings(rc *RC, reload bool) {
-	if rc.Embeddings != nil && !reload {
-		return
-	}
+func loadAccountEmbeddings(rc *RC, accountID m.AccountID) *m.AccountEmbeddings {
 	embs := new(m.AccountEmbeddings)
 	embs.Embeddings = edb.All(edb.ExactIndexScan[m.ContentEmbedding](rc, EmbeddingsByAccountType, m.ContentEmbeddingAccountTypeKey{
-		AccountID: rc.AccountID(),
+		AccountID: accountID,
 		Type:      m.CurrentEmbeddingType,
 	}))
-	rc.Embeddings = embs
-	flogger.Log(rc, "Loaded %d embeddings", len(rc.Embeddings.Embeddings))
+	flogger.Log(rc, "Loaded %d embeddings", len(embs.Embeddings))
+	return embs
 }
 
 func deleteContentByItem(rc *RC, itemID m.ItemID) {

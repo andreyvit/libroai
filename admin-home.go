@@ -10,11 +10,12 @@ import (
 func (app *App) showAdminHome(rc *mvp.RC, in *struct{}) (*mvp.ViewData, error) {
 	wls := edb.All(edb.TableScan[m.Waitlister](rc, edb.FullScan()))
 	users := edb.All(edb.TableScan[m.User](rc, edb.FullScan()))
+	
 
 	return &mvp.ViewData{
-		View:         "superadmin/home",
+		View:         "admin/home",
 		Title:        "Admin",
-		SemanticPath: "admin",
+		SemanticPath: "admin/home",
 		Data: struct {
 			Waitlisters []*m.Waitlister
 			Users       []*m.User

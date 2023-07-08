@@ -71,7 +71,8 @@ var (
 
 	ChatContent = edb.AddTable(dbSchema, "chat_content_02", 1, func(row *m.ChatContent, ib *edb.IndexBuilder) {
 	}, func(tx *edb.Tx, row *m.ChatContent, oldVer uint64) {
-	}, []*edb.Index{})
+	}, []*edb.Index{},
+		edb.SuppressContentWhenLogging)
 
 	Folders = edb.AddTable(dbSchema, "folders", 1, func(row *m.Folder, ib *edb.IndexBuilder) {
 		ib.Add(FoldersByAccountParent, m.AccountObject(row.AccountID, row.ParentID))

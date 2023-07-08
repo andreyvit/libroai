@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/andreyvit/edb"
-	"github.com/andreyvit/mvp/flogger"
 	"github.com/andreyvit/mvp/httperrors"
 
 	m "github.com/andreyvit/buddyd/model"
@@ -42,6 +41,5 @@ func loadChatContent(rc *RC, chatID m.ChatID) *m.ChatContent {
 
 func loadUserChatListMiddleware(rc *RC) (any, error) {
 	rc.Chats = edb.All(edb.IndexScan[m.Chat](rc, ChatsByUser, edb.ExactScan(rc.UserID()).Reversed()))
-	flogger.Log(rc, "rc.Chats = %v", rc.Chats)
 	return nil, nil
 }

@@ -10,6 +10,8 @@ github.com/andreyvit/jsonfix v1.0.0 h1:S5BFMo08D6Uh3mnxtR8/Mtu+uzREQqgVplpZUI1wu
 github.com/andreyvit/jsonfix v1.0.0/go.mod h1:D+50dQUMcVE3/aO6IUkCiqYc44JrYPlJpdBGxVqiBhQ=
 github.com/andreyvit/minicomponents v0.3.2 h1:NDvStqcl+FaB1zePgJsfLDVcJcr13vvJaVlxAM/N+qE=
 github.com/andreyvit/minicomponents v0.3.2/go.mod h1:JUl5yFUwD4u+o6L8osxSXC4CeFXuM9w9Y/TDppsH1/M=
+github.com/andreyvit/multierr v1.0.0 h1:zJt7nKUpcz6ZnCaHvEWRB0U44DJIxDU/zthg/2Aur/U=
+github.com/andreyvit/multierr v1.0.0/go.mod h1:Z5/l+qGiq8qPz7V3i0X8vMC0Ma+tbtbu63c3nwHdQUQ=
 github.com/andreyvit/openai v0.0.0-20230318101313-1a42ea08c3f4 h1:UqTRR/oVVFvhrqQ63mjPCgjeRZ3x7hy50824io/a6ic=
 github.com/andreyvit/openai v0.0.0-20230318101313-1a42ea08c3f4/go.mod h1:lkTa9ygN0wYaFpLVkpRzelKuj/nZYSZS24SAO5b3kNQ=
 github.com/andreyvit/plainsecrets v0.1.2 h1:jq4QAaaokPJpBAEOejmYMK0x50tUlwQoqvXXo6DnCyQ=

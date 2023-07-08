@@ -7,6 +7,7 @@ import (
 	"github.com/andreyvit/mvp"
 	"github.com/andreyvit/mvp/flake"
 	"github.com/andreyvit/mvp/flogger"
+	"github.com/andreyvit/mvp/httperrors"
 	"github.com/andreyvit/openai"
 
 	m "github.com/andreyvit/buddyd/model"
@@ -62,68 +63,64 @@ func (app *App) sendChatMessage(rc *RC, in *struct {
 	if err != nil {
 		return nil, err
 	}
-	content := loadChatContent(rc, chat.ID)
-	isNew := (chat.ID == 0)
-	if isNew {
+	cc := loadChatContent(rc, chat.ID)
+	if chat.ID == 0 {
 		chat.ID = app.NewID()
-		content.ChatID = chat.ID
+		cc.ChatID = chat.ID
 	}
 
-	msg := &m.Message{
-		ID:   app.NewID(),
-		Role: m.MessageRoleUser,
-		Text: in.Message,
-	}
+	userTurn := app.addTurn(cc, m.MessageRoleUser)
+	app.addUserMsg(userTurn, in.Message)
 
-	embedding, usage, err := openai.ComputeEmbedding(rc, msg.Text, app.httpClient, app.Settings().OpenAICreds)
-	if err != nil {
-		return nil, fmt.Errorf("embeddings: %w", err)
-	}
-	chat.Cost += openai.Cost(usage.PromptTokens, usage.CompletionTokens, EmbeddingModel)
-	msg.EmbeddingAda002 = embedding
+	botTurn := app.addTurn(cc, m.MessageRoleBot)
+	app.addBotPendingMsg(botTurn)
 
-	content.Turns = append(content.Turns, &m.Turn{
-		Role:     m.MessageRoleUser,
-		Versions: []*m.Message{msg},
-	})
-	edb.Put(rc, chat)
-	edb.Put(rc, content)
-
-	loadAccountEmbeddings(rc, false)
-
-	_, err = app.ProduceBotMessage(rc, chat, content)
-	if err != nil {
-		return nil, err
-	}
-
-	edb.Put(rc, chat)
-	edb.Put(rc, content)
+	edb.Put(rc, chat, cc)
+	app.EnqueueChatRollforward(rc, chat.ID)
 
 	return app.Redirect("chat.view", "chat", chat.ID), nil
 }
 
-func (app *App) voteChatResponse(rc *RC, in *struct {
-	ChatID       flake.ID `form:"chat,path" json:"-"`
-	RoundOrdinal int      `form:"round"`
-	ResponseKey  string   `form:"key"`
-	Vote         string   `form:"vote"`
+func (app *App) markChatMessage(rc *RC, in *struct {
+	ChatID    flake.ID `form:"chat,path" json:"-"`
+	MessageID flake.ID `form:"message,path" json:"-"`
+	Action    string   `json:"action"`
 }) (any, error) {
-	chat, err := loadChat(rc, in.ChatID, false)
-	if err != nil {
-		return nil, err
+	chat := must(loadChat(rc, in.ChatID, false))
+	cc := loadChatContent(rc, chat.ID)
+	turn, msg := cc.FindMessage(in.MessageID)
+	if turn == nil {
+		return nil, httperrors.NotFound
+	}
+	if turn.Role != m.MessageRoleBot {
+		return nil, httperrors.BadRequest.Msg("cannot mark or regen user messages")
 	}
 
-	_ = chat
-	// round := chat.Rounds[in.RoundOrdinal-1]
-	// switch in.Vote {
-	// case "up":
-	// 	round.BestResponseKey = in.ResponseKey
-	// case "undo-up":
-	// 	if round.BestResponseKey == in.ResponseKey {
-	// 		round.BestResponseKey = ""
-	// 	}
-	// }
-	// app.State.SaveChat(chat)
+	var rollforward bool
+	switch in.Action {
+	case "regen":
+		if !turn.IsLastMessagePending() {
+			app.addBotPendingMsg(turn)
+		}
+		rollforward = true
+	case "voteup":
+		msg.VotedUp = true
+		msg.VotedDown = false
+	case "undo-voteup":
+		msg.VotedUp = false
+	case "votedown":
+		msg.VotedDown = true
+		msg.VotedUp = false
+	case "undo-votedown":
+		msg.VotedDown = false
+	default:
+		return nil, httperrors.BadRequest.Msg("invalid action")
+	}
 
-	return app.Redirect("chat.view", "chat", in.ChatID), nil
+	edb.Put(rc, chat, cc)
+	if rollforward {
+		app.EnqueueChatRollforward(rc, chat.ID)
+	}
+
+	return app.Redirect("chat.view", "chat", chat.ID), nil
 }

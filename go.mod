@@ -18,9 +18,20 @@ require (
 )
 
 require (
+	github.com/andreyvit/multierr v1.0.0 // indirect
 	github.com/andreyvit/mvp v0.1.0 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.etcd.io/bbolt v1.3.7 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 )
+
+replace github.com/andreyvit/mvp => /Users/andreyvit/Developer/andreyvit/mvp
+
+replace github.com/andreyvit/edb => /Users/andreyvit/Developer/andreyvit/edb
+
+replace github.com/andreyvit/minicomponents => /Users/andreyvit/Developer/andreyvit/minicomponents
+
+replace github.com/andreyvit/openai => /Users/andreyvit/Developer/andreyvit/openai
+
+replace github.com/andreyvit/httpform => /Users/andreyvit/Developer/andreyvit/httpform

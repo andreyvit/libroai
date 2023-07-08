@@ -33,28 +33,28 @@ type PromptResult struct {
 	ContextDistances  []float64
 }
 
-func (app *App) BuildSystemPrompt(rc *RC, prompt string, chat *m.Chat, cc *m.ChatContent) (PromptResult, error) {
+func (app *App) BuildSystemPrompt(rc *RC, prompt string, cc *m.ChatContent, beforeTurnIndex int, embs *m.AccountEmbeddings) (PromptResult, error) {
 	var result PromptResult
 
 	prefix, suffix, _ := strings.Cut(prompt, "||")
 	prefix = strings.TrimSpace(prefix)
 	suffix = strings.TrimSpace(suffix)
 
-	m1 := cc.FirstUserMessage()
-	m2 := cc.LatestUserMessage()
+	m1 := cc.FirstUserMessage(beforeTurnIndex)
+	m2 := cc.LastUserMessage(beforeTurnIndex)
 
 	// flogger.Log(rc, "First message: %v", m1.Text)
 	// flogger.Log(rc, "Last message: %v", m2.Text)
 
 	var entries m.EntriesAndDistances
 	if m1 != nil {
-		ed := rc.Embeddings.Select(m1.EmbeddingAda002, MaxContextEntries, MaxContextDistance)
+		ed := embs.Select(m1.EmbeddingAda002, MaxContextEntries, MaxContextDistance)
 		// flogger.Log(rc, "First message context: %d", len(ed.Entries))
 		entries.AppendAll(ed)
 		// flogger.Log(rc, "Total context: %d", len(entries.Entries))
 	}
 	if m2 != nil && m2 != m1 {
-		ed := rc.Embeddings.Select(m2.EmbeddingAda002, MaxContextEntries, MaxContextDistance)
+		ed := embs.Select(m2.EmbeddingAda002, MaxContextEntries, MaxContextDistance)
 		// flogger.Log(rc, "Second message context: %d", len(ed.Entries))
 		entries.AppendAll(ed)
 		// flogger.Log(rc, "Total context: %d", len(entries.Entries))

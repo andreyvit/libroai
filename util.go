@@ -12,3 +12,11 @@ func ensure(err error) {
 		panic(err)
 	}
 }
+
+func cond[T any](cond bool, trueVal, falseVal T) T {
+	if cond {
+		return trueVal
+	} else {
+		return falseVal
+	}
+}

@@ -1,10 +1,5 @@
-<div id="{{.HTMLElementID}}" class="Message | px-6 py-6 | {{switchstr .Role "bot" "bg-gray-100" "user" "bg-white" "bg-gray-200"}} | border-gray-300">
+<div id="{{.HTMLElementID}}" class="Message | px-6 py-6 space-y-2 | {{switchstr .Role "bot" "bg-gray-100" "user" "bg-white" "bg-gray-200"}} | border-gray-300">
   <div class="Message__body relative | mx-auto max-w-prose space-y-3">
-    {{if .State.IsPending}}
-    <div class="text-yellow-600">(pending...)</div>
-    {{else if .State.IsFailed}}
-    <div class="text-red-600">(failed)</div>
-    {{end}}
     {{/*if .Key}}
     <div class="Message__key | ml-auto -mt-4 -mb-2 | text-right text-xs">
       {{.Key}}
@@ -13,25 +8,38 @@
     {{range .Paragraphs}}
     <p>{{.}}</p>
     {{end}}
-    <form class="flex flex-row items-center gap-0.5 | my-2" method="POST">
-      <input type="hidden" name="chat_id" value="{{.ChatID}}">
-      <input type="hidden" name="turn_index" value="{{.TurnIndex}}">
-      <input type="hidden" name="message_id" value="{{.ID}}">
-      {{if not .IsVotedUp}}
-      <button type="submit" name="action" value="up">
-        <c-icon src="icons/action-voteup" />
-      </button>
-      {{else}}
-      <button type="submit" name="action" value="undo-up">
-        <c-icon src="icons/action-voteup-filled" />
-      </button>
-      {{end}}
-      <button class="hidden">
-        <c-icon src="icons/action-votedown" />
-      </button>
-      <button class="hidden">
-        <c-icon src="icons/action-votedown" />
-      </button>
-    </form>*/}}
+
+    {{if .State.IsPending}}
+    <div class="text-yellow-600">(pending...)</div>
+    {{else if .State.IsFailed}}
+    <div class="text-red-600">(failed)</div>
+    {{end}}
+
   </div>
+
+  {{if .Role.IsBot}}
+  <form class="flex flex-row items-center gap-0.5 | my-2" method="POST" action="{{url_for $ "chat.messages.mark" "chat" .ChatID "message" .ID}}">
+    {{if not .VotedUp}}
+    <button type="submit" name="action" value="voteup">
+      <c-icon src="icons/action-voteup.svg" />
+    </button>
+    {{else}}
+    <button type="submit" name="action" value="undo-voteup">
+      <c-icon src="icons/action-voteup-filled.svg" class="text-teal-700" />
+    </button>
+    {{end}}
+    {{if not .VotedDown}}
+    <button type="submit" name="action" value="votedown">
+      <c-icon src="icons/action-votedown.svg" />
+    </button>
+    {{else}}
+    <button type="submit" name="action" value="undo-votedown">
+      <c-icon src="icons/action-votedown-filled.svg" class="text-red-700" />
+    </button>
+    {{end}}
+    <button type="submit" name="action" value="regen">
+      <c-icon src="icons/action-regen.svg" />
+    </button>
+  </form>
+  {{end}}
 </div>
