@@ -5,19 +5,45 @@ import (
 	"github.com/andreyvit/openai"
 )
 
-type ChatID = flake.ID
+type (
+	ChatID = flake.ID
 
-type Chat struct {
-	ID        ChatID       `msgpack:"-"`
-	AccountID AccountID    `msgpack:"a"`
-	UserID    UserID       `msgpack:"u"`
-	Cost      openai.Price `msgpack:"c"`
+	Chat struct {
+		ID              ChatID       `msgpack:"-"`
+		AccountID       AccountID    `msgpack:"a"`
+		UserID          UserID       `msgpack:"u"`
+		Cost            openai.Price `msgpack:"c"`
+		Title           string       `msgpack:"t,omitempty"`
+		TitleCustomized bool         `msgpack:"tc,omitempty"`
+		TitleGenerated  bool         `msgpack:"tg,omitempty"`
+		TitleRegen      bool         `msgpack:"trg,omitempty"`
+	}
+
+	ChatContent struct {
+		ChatID ChatID  `msgpack:"-"`
+		Turns  []*Turn `msgpack:"t"`
+		// LastEventID uint64  `msgpack:"le"`
+	}
+
+	ChatVM struct {
+		*Chat
+		Messages []*MessageVM
+	}
+)
+
+func (chat *Chat) IsGeneratingTitle() bool {
+	return chat.TitleRegen || (!chat.TitleGenerated && !chat.TitleCustomized)
 }
 
-type ChatContent struct {
-	ChatID ChatID  `msgpack:"-"`
-	Turns  []*Turn `msgpack:"t"`
-	// LastEventID uint64  `msgpack:"le"`
+func (chat *Chat) TitleWithFallback() string {
+	if chat.Title != "" {
+		return chat.Title
+	}
+	return chat.ID.String()
+}
+
+func (chat *Chat) NavItemHTMLElementID() string {
+	return "chat_nav_" + chat.ID.String()
 }
 
 func (cc *ChatContent) LastTurn() *Turn {
@@ -83,11 +109,6 @@ func (cc *ChatContent) FreshMessage(staleMsg *Message) *Message {
 
 func (cc *ChatContent) Message(turnIndex int, msgID MessageID) *Message {
 	return cc.Turns[turnIndex].Message(msgID)
-}
-
-type ChatVM struct {
-	*Chat
-	Messages []*MessageVM
 }
 
 func WrapChat(chat *Chat, content *ChatContent) *ChatVM {

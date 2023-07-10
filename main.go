@@ -55,6 +55,7 @@ var configuration = &mvp.Configuration{
 	EmbeddedSecrets:  embeddedSecrets,
 	EmbeddedStaticFS: embeddedStaticAssetsFS,
 	EmbeddedViewsFS:  embeddedViewsFS,
+	FallbackFormID:   "generic-form",
 
 	LoadSecrets: loadSecrets,
 
@@ -168,7 +169,7 @@ func initDB(app *App, rc *RC) {
 	if email == "" {
 		log.Fatalf("%s: RootUserEmail not configured", app.Settings().Configuration.ConfigFileName)
 	}
-	acc := ensureAccount(app, rc, "SuperSandbox")
+	acc := ensureAccount(app, rc, "sandbox")
 	ensureRootUser(app, rc, email, []m.AccountID{acc.ID})
 }
 

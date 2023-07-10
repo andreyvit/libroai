@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/andreyvit/edb"
 	"github.com/andreyvit/multierr"
 	"github.com/andreyvit/mvp"
 	"github.com/andreyvit/mvp/flogger"
-	"github.com/andreyvit/mvp/hotwired"
 	"github.com/andreyvit/mvp/mvplive"
 	mvpm "github.com/andreyvit/mvp/mvpmodel"
 	"github.com/andreyvit/openai"
@@ -25,10 +25,13 @@ func (app *App) EnqueueChatRollforward(rc *RC, chatID m.ChatID) {
 func (app *App) runChatRollforward(rc *RC, chatID m.ChatID) error {
 	var unembeddedMsgs []*m.Message
 	var pendingBotMsg *m.Message
+	var needTitle bool
 	err := app.InTx(&rc.RC, mvpm.SafeReader, func() error {
+		chat := edb.Get[m.Chat](rc, chatID)
 		cc := edb.Get[m.ChatContent](rc, chatID)
 		unembeddedMsgs = findMessagesWithMissingEmbeddings(cc)
 		pendingBotMsg = findPendingBotMessage(cc)
+		needTitle = chat.IsGeneratingTitle()
 		return nil
 	})
 
@@ -62,89 +65,182 @@ func (app *App) runChatRollforward(rc *RC, chatID m.ChatID) error {
 		}
 	}
 
-	if pendingBotMsg == nil {
+	if pendingBotMsg == nil && !needTitle {
 		return nil
 	}
 
-	var history []openai.Msg
-	err = app.InTx(&rc.RC, mvpm.SafeReader, func() error {
-		chat := edb.Get[m.Chat](rc, chatID)
-		cc := edb.Get[m.ChatContent](rc, chatID)
-		embs := loadAccountEmbeddings(rc, chat.AccountID)
+	if pendingBotMsg != nil {
+		var history []openai.Msg
+		err = app.InTx(&rc.RC, mvpm.SafeReader, func() error {
+			chat := edb.Get[m.Chat](rc, chatID)
+			cc := edb.Get[m.ChatContent](rc, chatID)
+			embs := loadAccountEmbeddings(rc, chat.AccountID)
 
-		pres, err := app.BuildSystemPrompt(rc, prompt1, cc, pendingBotMsg.TurnIndex, embs)
+			pres, err := app.BuildSystemPrompt(rc, prompt1, cc, pendingBotMsg.TurnIndex, embs)
+			if err != nil {
+				return err
+			}
+
+			flogger.Log(rc, "Prompt: %s", pres.Prompt)
+
+			history = append(history, openai.SystemMsg(pres.Prompt))
+			for i, t := range cc.Turns {
+				if i >= pendingBotMsg.TurnIndex {
+					break
+				}
+				msg := t.LastMessage()
+				history = append(history, openai.Msg{
+					Role:    msg.Role.OpenAIRole(),
+					Content: msg.Text,
+				})
+			}
+			return nil
+		})
 		if err != nil {
 			return err
 		}
 
-		flogger.Log(rc, "Prompt: %s", pres.Prompt)
+		opt := openai.DefaultChatOptions()
+		opt.Model = DefaultModel
+		opt.MaxTokens = MaxResponseTokenCount
+		opt.Temperature = 0.75
 
-		history = append(history, openai.SystemMsg(pres.Prompt))
-		for i, t := range cc.Turns {
-			if i >= pendingBotMsg.TurnIndex {
-				break
+		newBotMsg, newBotMsgErr := openai.StreamChat(rc, history, opt, app.httpClient, app.Settings().OpenAICreds, func(msg *openai.Msg, delta string) error {
+			flogger.Log(rc, "openai chunk: <<<%s>>>", delta)
+			pendingBotMsg.Text = msg.Content
+			pushMessage(&rc.RC, chatID, pendingBotMsg)
+			return nil
+		})
+
+		spent := openai.Cost(openai.ChatTokenCount(history, opt.Model), openai.MsgTokenCount(newBotMsg, opt.Model), opt.Model)
+
+		err = app.InTx(&rc.RC, mvpm.SafeWriter, func() error {
+			chat := edb.Get[m.Chat](rc, chatID)
+			cc := edb.Get[m.ChatContent](rc, chatID)
+			msg := cc.FreshMessage(pendingBotMsg)
+
+			chat.Cost += spent
+
+			if msg == nil {
+				flogger.Log(rc, "WARNING: bot message not found for pendingBotMsg %v %v", pendingBotMsg.ID, pendingBotMsg)
+				pendingBotMsg = nil
+			} else {
+				if newBotMsgErr != nil {
+					msg.State = m.MessageStateFailed
+				} else {
+					msg.Text = newBotMsg.Content
+					msg.State = m.MessageStateFinished
+				}
+				pendingBotMsg = msg
 			}
-			msg := t.LastMessage()
-			history = append(history, openai.Msg{
-				Role:    msg.Role.OpenAIRole(),
-				Content: msg.Text,
-			})
+			edb.Put(rc, chat, cc)
+			return nil
+		})
+		if err != nil {
+			return err
 		}
-		return nil
-	})
-	if err != nil {
-		return err
+		if pendingBotMsg != nil {
+			pushMessage(&rc.RC, chatID, pendingBotMsg)
+		}
 	}
 
-	opt := openai.DefaultChatOptions()
-	opt.Model = DefaultModel
-	opt.MaxTokens = MaxResponseTokenCount
-	opt.Temperature = 0.75
-
-	botMsg, chatErr := openai.StreamChat(rc, history, opt, app.httpClient, app.Settings().OpenAICreds, func(msg *openai.Msg, delta string) error {
-		flogger.Log(rc, "openai chunk: <<<%s>>>", delta)
-		pendingBotMsg.Text = msg.Content
-		pushMessage(&rc.RC, chatID, pendingBotMsg)
-		return nil
-	})
-
-	err = app.InTx(&rc.RC, mvpm.SafeWriter, func() error {
-		chat := edb.Get[m.Chat](rc, chatID)
-		cc := edb.Get[m.ChatContent](rc, chatID)
-		msg := cc.FreshMessage(pendingBotMsg)
-
-		chat.Cost += openai.Cost(openai.ChatTokenCount(history, opt.Model), openai.MsgTokenCount(botMsg, opt.Model), opt.Model)
-
-		if chatErr != nil {
-			msg.State = m.MessageStateFailed
-		} else {
-			msg.Text = botMsg.Content
-			msg.State = m.MessageStateFinished
+	if needTitle {
+		var history []openai.Msg
+		history = append(history, openai.SystemMsg(chatTitleSystemPrompt))
+		err = app.InTx(&rc.RC, mvpm.SafeReader, func() error {
+			cc := edb.Get[m.ChatContent](rc, chatID)
+			for _, t := range cc.Turns {
+				if t.Role == m.MessageRoleUser {
+					msg := t.LastMessage()
+					history = append(history, openai.Msg{
+						Role:    msg.Role.OpenAIRole(),
+						Content: msg.Text,
+					})
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return err
 		}
-		pendingBotMsg = msg
-		edb.Put(rc, chat, cc)
-		return nil
-	})
-	if err != nil {
-		return err
-	}
 
-	pushMessage(&rc.RC, chatID, pendingBotMsg)
+		opt := openai.DefaultChatOptions()
+		opt.Model = DefaultModel
+		opt.MaxTokens = MaxResponseTokenCount
+		opt.Temperature = 0.75
+		opt.Functions = []any{chatTitleFunc}
+		opt.FunctionCallMode = &openai.ForceFunctionCall{Name: chatTitleFuncName}
+
+		newTitleMsgs, usage, err := openai.Chat(rc, history, opt, app.httpClient, app.Settings().OpenAICreds)
+		spent := openai.Cost(usage.PromptTokens, usage.CompletionTokens, opt.Model)
+		var newTitle string
+		if err == nil {
+			var result ChatTitleFuncResult
+			err = newTitleMsgs[0].UnmarshalCallArguments(&result)
+			if err == nil {
+				newTitle = result.Title
+				if newTitle == "" {
+					err = fmt.Errorf("ChatGPT returned an empty title")
+				}
+			}
+		}
+
+		if err != nil {
+			flogger.Log(rc, "WARNING: title generation failed: %v", err)
+		}
+
+		var chat *m.Chat
+		err = app.InTx(&rc.RC, mvpm.SafeWriter, func() error {
+			chat = edb.Get[m.Chat](rc, chatID)
+
+			chat.Cost += spent
+
+			if needTitle && (chat.TitleRegen || !chat.TitleCustomized) {
+				if newTitle != "" {
+					chat.TitleGenerated = true
+				}
+				if newTitle == "" && chat.Title == "" {
+					newTitle = chat.ID.Time().Format("Chat Jan 02")
+				}
+				if newTitle != "" {
+					chat.Title = newTitle
+					if false {
+						chat.Title += time.Now().Format(" 15:04:05")
+					}
+				}
+				chat.TitleRegen = false
+			}
+
+			edb.Put(rc, chat)
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		pushChatTitle(&rc.RC, chat)
+	}
 
 	return nil
 }
 
 func pushMessage(rc *mvp.RC, chatID m.ChatID, msg *m.Message) {
-	app := rc.App()
-	content := app.RenderPartial(rc, "chat/_message", m.WrapMessage(msg, chatID))
-	app.PublishTurbo(rc, mvplive.Channel{
+	mvp.PushPartial(rc, "chat/_message", m.WrapMessage(msg, chatID), msg.HTMLElementID(), chatChannel(chatID), mvplive.Envelope{
+		DedupKey: msg.ID.String(),
+	})
+}
+
+func pushChatTitle(rc *mvp.RC, chat *m.Chat) {
+	mvp.PushPartial(rc, "chat/_nav_item", chat, chat.NavItemHTMLElementID(), chatChannel(chat.ID), mvplive.Envelope{
+		DedupKey: "title",
+	})
+}
+
+func chatChannel(chatID m.ChatID) mvplive.Channel {
+	return mvplive.Channel{
 		Family: chatChannelFamily,
 		Topic:  chatID.String(),
-	}, mvplive.Envelope{
-		DedupKey: msg.ID.String(),
-	}, func(stream *hotwired.Stream) {
-		stream.Replace(msg.HTMLElementID(), string(content))
-	})
+	}
 }
 
 func findMessagesWithMissingEmbeddings(cc *m.ChatContent) []*m.Message {

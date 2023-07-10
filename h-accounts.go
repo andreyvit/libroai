@@ -8,6 +8,7 @@ import (
 
 	"github.com/andreyvit/edb"
 	"github.com/andreyvit/mvp"
+	"github.com/andreyvit/mvp/flake"
 	"github.com/andreyvit/mvp/flogger"
 	mvpm "github.com/andreyvit/mvp/mvpmodel"
 
@@ -179,7 +180,7 @@ func (app *App) finishSignIn(rc *mvp.RC, email string) (any, error) {
 
 func (app *App) openApp(rc *RC) (*mvp.Redirect, error) {
 	if rc.Can(m.PermissionManageAccount, nil) {
-		return rc.Redirect("admin.home"), nil
+		return rc.Redirect("admin.users"), nil
 	} else {
 		return rc.Redirect("chat.home"), nil
 	}
@@ -203,7 +204,7 @@ func (app *App) startSession(rc *mvp.RC, actor m.Actor) {
 	})
 }
 
-func (app *App) showPickAccountForm(rc *mvp.RC, in *struct{}) (*mvp.ViewData, error) {
+func (app *App) showAccountSwitcher(rc *mvp.RC, in *struct{}) (*mvp.ViewData, error) {
 	wls := edb.All(edb.TableScan[m.Waitlister](rc, edb.FullScan()))
 	users := edb.All(edb.TableScan[m.User](rc, edb.FullScan()))
 
@@ -225,4 +226,41 @@ func (app *App) handleSignOut(rc *mvp.RC, in *struct{}) (any, error) {
 	return &mvp.Redirect{
 		Path: app.URL("signin"),
 	}, nil
+}
+
+func (app *App) switchAccount(rc *RC, in *struct {
+	NewAccountID flake.ID `form:"newaccount,path" json:"-"`
+	ReturnPath   string   `json:"return_to"`
+}) (*mvp.Redirect, error) {
+	flogger.Log(rc, "Switch to account %v start...", in.NewAccountID)
+	acc := edb.Get[m.Account](rc, in.NewAccountID)
+	if acc == nil {
+		return nil, m.ErrForbiddenWrongAccount
+	}
+
+	if err := m.CheckAccess(rc.User, m.PermissionSwitchToAccount, in.NewAccountID, nil); err != nil {
+		flogger.Log(rc, "Switch to account %v refused: %v", in.NewAccountID, err)
+		return nil, err
+	}
+	flogger.Log(rc, "Switch to account %v", in.NewAccountID)
+
+	sessID := rc.SessionID()
+	if sessID == 0 {
+		return redirectToLogIn(rc), nil
+	}
+	sess := edb.Get[m.Session](rc, sessID)
+	if sess == nil {
+		return redirectToLogIn(rc), nil
+	}
+
+	sess.AccountID = in.NewAccountID
+	edb.Put(rc, sess)
+	rc.Session = sess
+	rc.Account = acc
+
+	if in.ReturnPath != "" {
+		return &mvp.Redirect{Path: in.ReturnPath}, nil
+	} else {
+		return app.openApp(rc)
+	}
 }

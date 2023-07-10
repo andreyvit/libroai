@@ -27,6 +27,10 @@ var _userStatusStrings = []string{
 	"selfrejected",
 }
 
+func (v UserStatus) IsKnown() bool {
+	return v != UserStatusUnknown
+}
+
 func (v UserStatus) Invitable() bool {
 	return v == UserStatusUnknown || v == UserStatusInactive || v == UserStatusBanned
 }

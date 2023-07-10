@@ -7,9 +7,25 @@ import (
 	m "github.com/andreyvit/buddyd/model"
 )
 
-func (app *App) listSuperadminAccounts(rc *mvp.RC, in *struct{}) (*mvp.ViewData, error) {
+type AccountVM struct {
+	*m.Account
+	IsCurrent bool
+}
+
+func (app *App) listSuperadminAccounts(rc *RC, in *struct{}) (*mvp.ViewData, error) {
 	wls := edb.All(edb.TableScan[m.Waitlister](rc, edb.FullScan()))
-	users := edb.All(edb.TableScan[m.User](rc, edb.FullScan()))
+	rawAccounts := edb.All(edb.TableScan[m.Account](rc, edb.FullScan()))
+	curAccountID := rc.AccountID()
+
+	accounts := make([]*AccountVM, 0, len(rawAccounts))
+	for _, acc := range rawAccounts {
+		if acc != nil {
+			accounts = append(accounts, &AccountVM{
+				Account:   acc,
+				IsCurrent: acc.ID == curAccountID,
+			})
+		}
+	}
 
 	return &mvp.ViewData{
 		View:         "superadmin/accounts",
@@ -17,10 +33,10 @@ func (app *App) listSuperadminAccounts(rc *mvp.RC, in *struct{}) (*mvp.ViewData,
 		SemanticPath: "superadmin/accounts",
 		Data: struct {
 			Waitlisters []*m.Waitlister
-			Users       []*m.User
+			Accounts    []*AccountVM
 		}{
 			Waitlisters: wls,
-			Users:       users,
+			Accounts:    accounts,
 		},
 	}, nil
 }

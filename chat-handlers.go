@@ -53,7 +53,7 @@ func (app *App) sendChatMessage(rc *RC, in *struct {
 	Message string   `json:"message"`
 }) (any, error) {
 	if in.Message == "" {
-		return app.Redirect("chat.view", "chat", in.ChatID), nil
+		return app.Redirect("chat.view", ":chat", in.ChatID), nil
 	}
 	if openai.TokenCount(in.Message, DefaultModel) > MaxMsgTokenCount {
 		return nil, fmt.Errorf("message too long")
@@ -78,7 +78,7 @@ func (app *App) sendChatMessage(rc *RC, in *struct {
 	edb.Put(rc, chat, cc)
 	app.EnqueueChatRollforward(rc, chat.ID)
 
-	return app.Redirect("chat.view", "chat", chat.ID), nil
+	return app.Redirect("chat.view", ":chat", chat.ID), nil
 }
 
 func (app *App) markChatMessage(rc *RC, in *struct {
@@ -122,5 +122,41 @@ func (app *App) markChatMessage(rc *RC, in *struct {
 		app.EnqueueChatRollforward(rc, chat.ID)
 	}
 
-	return app.Redirect("chat.view", "chat", chat.ID), nil
+	return app.Redirect("chat.view", ":chat", chat.ID), nil
+}
+
+func (app *App) handleChatAction(rc *RC, in *struct {
+	ChatID flake.ID `form:"chat,path" json:"-"`
+	Action string   `form:"action,path" json:"-"`
+}) (any, error) {
+	chat := must(loadChat(rc, in.ChatID, false))
+	cc := loadChatContent(rc, chat.ID)
+
+	var rollforward bool
+	switch in.Action {
+	case "retitle":
+
+	default:
+		return nil, httperrors.BadRequest.Msg("invalid action")
+	}
+
+	edb.Put(rc, chat, cc)
+	if rollforward {
+		app.EnqueueChatRollforward(rc, chat.ID)
+	}
+
+	return rc.RedirectBack(), nil
+}
+
+func (app *App) doRetitleChat(rc *RC, in *struct {
+	ChatID flake.ID `json:"chat_id"`
+}) (any, error) {
+	chat := must(loadChat(rc, in.ChatID, false))
+	cc := loadChatContent(rc, chat.ID)
+
+	chat.TitleRegen = true
+
+	edb.Put(rc, chat, cc)
+	app.EnqueueChatRollforward(rc, chat.ID)
+	return rc.RedirectBack(), nil
 }

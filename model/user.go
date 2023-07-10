@@ -8,28 +8,30 @@ import (
 	mvpm "github.com/andreyvit/mvp/mvpmodel"
 )
 
-type UserID = flake.ID
+type (
+	UserID = flake.ID
 
-type User struct {
-	ID          UserID            `msgpack:"-"`
-	Memberships []*UserMembership `msgpack:"a"`
-	Role        UserSystemRole    `msgpack:"r"`
-	Email       string            `msgpack:"e"`
-	EmailNorm   string            `msgpack:"e!"`
-	Name        string            `msgpack:"n"`
-	LoginMsg    string            `msgpack:"msg,omitempty"`
-}
+	User struct {
+		ID          UserID            `msgpack:"-"`
+		Memberships []*UserMembership `msgpack:"a"`
+		Role        UserSystemRole    `msgpack:"r"`
+		Email       string            `msgpack:"e"`
+		EmailNorm   string            `msgpack:"e!"`
+		Name        string            `msgpack:"n"`
+		LoginMsg    string            `msgpack:"msg,omitempty"`
+	}
 
-type UserMembershipID = flake.ID
+	UserMembershipID = flake.ID
 
-type UserMembership struct {
-	CreationTime time.Time       `msgpack:"@"`
-	AccountID    AccountID       `msgpack:"a"`
-	Role         UserAccountRole `msgpack:"r"`
-	Status       UserStatus      `msgpack:"t"`
-	Source       UserSource      `msgpack:"s,omitempty"`
-	Comment      UserSource      `msgpack:"c,omitempty"`
-}
+	UserMembership struct {
+		CreationTime time.Time       `msgpack:"@"`
+		AccountID    AccountID       `msgpack:"a"`
+		Role         UserAccountRole `msgpack:"r"`
+		Status       UserStatus      `msgpack:"t"`
+		Source       UserSource      `msgpack:"s,omitempty"`
+		Comment      UserSource      `msgpack:"c,omitempty"`
+	}
+)
 
 func (obj *User) FlakeID() flake.ID {
 	return obj.ID
@@ -81,13 +83,20 @@ func CanAccess(u *User, perm Permission, accountID AccountID, obj mvpm.Object) b
 }
 
 func CheckAccess(u *User, perm Permission, accountID AccountID, obj mvpm.Object) error {
-	if u.Role == UserSystemRoleSuperadmin {
-		return nil
-	}
-
 	ar := u.MembershipRole(accountID)
 
 	switch perm {
+	case PermissionSwitchToAccount:
+		if accountID == 0 {
+			panic("zero account ID")
+		}
+		if u.Role.IsSuper() {
+			return nil
+		}
+		if ar != UserAccountRoleNone {
+			return nil
+		}
+		return ErrForbiddenWrongAccount
 	case PermissionAccessSuperadminArea:
 		if u.Role.IsSuper() {
 			return nil
@@ -99,6 +108,12 @@ func CheckAccess(u *User, perm Permission, accountID AccountID, obj mvpm.Object)
 		}
 		return ErrForbiddenNotSuperadmin
 	case PermissionAccessAdminArea:
+		if accountID == 0 {
+			panic("zero account ID")
+		}
+		if u.Role == UserSystemRoleSuperadmin {
+			return nil
+		}
 		switch ar {
 		case UserAccountRoleOwner, UserAccountRoleAdmin, UserAccountRoleAssistant:
 			return nil
@@ -108,6 +123,12 @@ func CheckAccess(u *User, perm Permission, accountID AccountID, obj mvpm.Object)
 			return ErrForbiddenNotStaff
 		}
 	case PermissionManageAccount:
+		if accountID == 0 {
+			panic("zero account ID")
+		}
+		if u.Role == UserSystemRoleSuperadmin {
+			return nil
+		}
 		switch ar {
 		case UserAccountRoleOwner, UserAccountRoleAdmin:
 			return nil

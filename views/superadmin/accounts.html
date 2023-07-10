@@ -9,27 +9,28 @@
 </section>
 
 <section class="space-y-6">
-    <h2 class="text-xl my-4">Users</h2>
-
-    <div class="grid grid-cols-3 gap-x-2 gap-y-3">
-    {{range .Users}}
-        <div class="">
-            <div>{{.Name}}</div>
-            <div>{{.Email}}</div>
-            <div>{{.ID}}</div>
-        </div>
-        <div class="">{{.Role}}</div>
-        <div class="">
-            {{range .Memberships}}
-            <div class="User__membership">
-                <div class="User__membership_id">@{{.AccountID}}</div>
-                <div class="User__membership_status">{{.Status}}</div>
-                <div class="User__membership_role">{{.Role}}</div>
+    <h2 class="text-xl my-4">Accounts</h2>
+    <ul role="list"  class="grid gap-x-2 gap-y-3 grid-cols-autofill-flex-64">
+        {{range .Accounts}}
+        <li class="Account | divide-y divide-neutral-200 space-y-4 pt-4 | rounded-lg bg-neutral-50 shadow-sm ring-1 ring-neutral-900/5 hover:ring-neutral-900/20">
+            <div class="Account__header flex flex-wrap | px-6">
+                <div class="flex-auto text-base font-semibold text-neutral-900">
+                    {{.Name}}
+                </div>
+                <div class="flex-none self-end">
+                    <dt class="sr-only">Status</dt>
+                    {{if .IsCurrent}}
+                    <dd class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">Current</dd>
+                    {{else if .Disabled}}
+                    <dd class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20">Disabled</dd>
+                    {{end}}
+                </div>
             </div>
-            {{end}}
-        </div>
-    {{end}}
-    </div>
-
-    <!-- <form method="POST" action=""> -->
+            <div class="-mt-px px-2 flex divide-x divide-neutral-200">
+                <c-link route="db.table.show" table="accounts" key="{{.ID}}" class="block w-0 flex-1 | py-4 px-4 text-center | text-sm font-semibold leading-6 text-neutral-900 hover:text-purple-700">Edit</c-link>
+                <form class="w-0 flex-1 | text-center" method="POST" action="{{url_for $ "switch_account" ":newaccount" .ID "?return_to" (url_for $ "superadmin.accounts")}}" data-turbo="false"><button type="submit" class="py-4 px-4 | text-sm font-semibold leading-6 text-neutral-900 hover:text-purple-700">Switch</button></form>
+            </div>
+        </li>
+        {{end}}
+    </ul>
 </section>

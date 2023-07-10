@@ -86,6 +86,11 @@ module.exports = {
       },
       // measure: "60ch",
       extend: {
+        fontSize: {
+          "1.5xs": ["0.65rem", {lineHeight: "0.85rem"}],
+          "2xs": ["0.55rem", {lineHeight: "0.55rem"}],
+          "3xs": ["0.45rem", {lineHeight: "0.45rem"}],
+        },
         flexGrow: {
           max: '999',
         },

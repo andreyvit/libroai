@@ -135,7 +135,7 @@ func (app *App) handleSuperadminTableRowForm(rc *mvp.RC, in *struct {
 			} else {
 				rc.DBTx().DeleteByKey(tbl, tbl.RowKey(row))
 			}
-			return app.Redirect("db.table.list", "table", in.Table), nil
+			return app.Redirect("db.table.list", ":table", in.Table), nil
 		} else {
 			row = tbl.NewRow()
 			err := json.Unmarshal([]byte(in.Data), &row)
@@ -153,7 +153,7 @@ func (app *App) handleSuperadminTableRowForm(rc *mvp.RC, in *struct {
 				app.SetNewKeyOnRow(row)
 			}
 			rc.DBTx().Put(tbl, row)
-			return app.Redirect("db.table.show", "table", in.Table, "key", tbl.KeyString(tbl.RowKey(row))), nil
+			return app.Redirect("db.table.show", ":table", in.Table, ":key", tbl.KeyString(tbl.RowKey(row))), nil
 		}
 	}
 

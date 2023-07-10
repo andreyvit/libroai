@@ -4,7 +4,7 @@
     <c-nav-sidebar-item title="New Chat" route="chat.home" sempath="chat/c/0" />
     <c-nav-sidebar-group title="Chats">
       {{range $.RC.Chats}}
-        <c-nav-sidebar-item title="{{.ID}}" route="chat.view" path-chat={{.ID}} sempath="chat/c/{{.ID}}" />
+        {{template "chat/_nav_item" $.Bind .}}
       {{end}}
     </c-nav-sidebar-group>
     {{else if $.IsActive "lib"}}
@@ -13,16 +13,16 @@
     </c-nav-sidebar-group>
     {{else if $.IsActive "mod"}}
     <c-nav-sidebar-group>
-      <c-nav-sidebar-item title="Dashboard" icon="icons/navbar-dashboard.svg" route="mod.home"/>
+      <c-nav-sidebar-item title="Account Activity" icon="icons/navbar-dashboard.svg" route="mod.activity"/>
     </c-nav-sidebar-group>
     <c-nav-sidebar-group title="All Chats">
       {{range $.RC.Chats}}
-        <c-nav-sidebar-item title="{{.ID}}" route="chat.view" path-chat={{.ID}} sempath="chat/c/{{.ID}}" />
+        <c-nav-sidebar-item id="chat_nav_{{.ID}}" title="{{.TitleWithFallback}}" route="mod.chat.view" path-chat={{.ID}} sempath="chat/c/{{.ID}}" />
       {{end}}
     </c-nav-sidebar-group>
     {{else if $.IsActive "admin"}}
     <c-nav-sidebar-group>
-      <c-nav-sidebar-item title="Dashboard" icon="icons/navbar-dashboard.svg" route="admin.home" />
+      <c-nav-sidebar-item title="Users" icon="icons/navbar-team.svg" route="admin.users" />
       <c-nav-sidebar-item title="Whitelist" icon="icons/navbar-team.svg" route="admin.whitelist" sempath="admin/whitelist" />
       {{/*<c-nav-sidebar-item title="Team" icon="icons/navbar-team.svg" route="chat.home" sempath="" />
       <c-nav-sidebar-item title="Projects" letter="P" route="" sempath="" />

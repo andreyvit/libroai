@@ -16,7 +16,12 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 	b.Route("signin.process", "POST /signin/", app.handleSignIn, mvp.RateLimitPresetSpam)
 	b.Route("signout", "POST /signout/", app.handleSignOut)
 
-	b.Route("accountpicker", "GET /pick-account/", app.showPickAccountForm)
+	b.Route("switch_account.show", "GET /accounts/", app.showAccountSwitcher)
+	b.Route("switch_account", "POST /accounts/:newaccount/switch", app.switchAccount)
+
+	b.Group("/funcs", func(b *mvp.RouteBuilder) {
+		b.Func(app.doRetitleChat)
+	})
 
 	b.Group("/chat", func(b *mvp.RouteBuilder) {
 		b.UseIn("authorize", requireLoggedIn)
@@ -25,7 +30,8 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 		b.Route("chat.home", "GET /", app.showNewChat)
 		b.Route("chat.view", "GET /c/:chat", app.showChat)
 		b.Route("chat.messages.send", "POST /c/:chat/send", app.sendChatMessage)
-		b.Route("chat.messages.mark", "POST /c/:chat/m/:message/mark", app.markChatMessage)
+		b.Route("chat.messages.action", "POST /c/:chat/m/:message/action", app.markChatMessage)
+		b.Route("chat.action", "POST /c/:chat/:action", app.handleChatAction)
 
 		b.Route("chat.sse", "GET /c/:chat/events/", app.handleChatEventStream).UseIn("authorize", nil)
 	})
@@ -42,13 +48,14 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 	b.Group("/mod", func(b *mvp.RouteBuilder) {
 		b.UseIn("authorize", requireAdmin)
 
-		b.Route("mod.home", "GET /", app.showModerationHome).Use(loadAllChatListMiddleware)
+		b.Route("mod.activity", "GET /", app.showAccountActivity).Use(loadAllChatListMiddleware)
+		b.Route("mod.chat.view", "GET /c/:chat", app.showChat)
 	})
 
 	b.Group("/admin", func(b *mvp.RouteBuilder) {
 		b.UseIn("authorize", requireAdmin)
 
-		b.Route("admin.home", "GET /", app.showAdminHome)
+		b.Route("admin.users", "GET /", app.listAdminUsers)
 		b.Route("admin.whitelist", "GET /whitelist/", app.handleAdminWhitelist)
 		b.Route("admin.whitelist.save", "POST /whitelist/", app.handleAdminWhitelist)
 	})

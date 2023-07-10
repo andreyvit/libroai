@@ -10,6 +10,7 @@ customElements.define('mvp-stream-source', class extends HTMLElement {
     if (!this.streamSource) {
       this.streamSource = new EventSource(this.src)
       Turbo.connectStreamSource(this.streamSource)
+      console.log("connecting to stream source ", this.src)
     }
   }
 
@@ -17,6 +18,7 @@ customElements.define('mvp-stream-source', class extends HTMLElement {
     // console.log('<mvp-stream-source> disconnect')
     requestAnimationFrame(() => {
       if (this.streamSource && !this.isConnected) {
+        console.log("disconnecting from stream source ", this.src)
         Turbo.disconnectStreamSource(this.streamSource)
         this.streamSource.close()
         this.streamSource = null

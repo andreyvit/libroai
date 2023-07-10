@@ -12,6 +12,90 @@ import (
 	m "github.com/andreyvit/buddyd/model"
 )
 
+type (
+	UserStatusGroupVM struct {
+		Title string
+		Users []*UserWithMembershipVM
+	}
+
+	UserWithMembershipVM struct {
+		*m.User
+		Membership *m.UserMembership
+	}
+)
+
+func (app *App) listAdminUsers(rc *RC, in *struct{}) (*mvp.ViewData, error) {
+	accountID := rc.AccountID()
+	var admins, assistants, regulars, invited, banned, rejected []*UserWithMembershipVM
+	for c := edb.ExactIndexScan[m.User](rc, UsersByAccount, accountID); c.Next(); {
+		u := c.Row()
+		if memb := u.Membership(accountID); memb != nil && memb.Status.IsKnown() {
+			um := &UserWithMembershipVM{
+				User:       u,
+				Membership: memb,
+			}
+			if memb.Status == m.UserStatusBanned {
+				banned = append(banned, um)
+			} else if memb.Status == m.UserStatusSelfRejected {
+				rejected = append(rejected, um)
+			} else if memb.Role == m.UserAccountRoleOwner {
+				admins = append(admins, um)
+			} else if memb.Role == m.UserAccountRoleAdmin {
+				admins = append(admins, um)
+			} else if memb.Role == m.UserAccountRoleAssistant {
+				assistants = append(assistants, um)
+			} else if memb.Status == m.UserStatusInvited {
+				invited = append(invited, um)
+			} else if memb.Role == m.UserAccountRoleConsumer && memb.Status == m.UserStatusActive {
+				regulars = append(regulars, um)
+			}
+		}
+	}
+
+	var groups []*UserStatusGroupVM
+	if len(admins) > 0 {
+		groups = append(groups, &UserStatusGroupVM{
+			Title: "Admins",
+			Users: admins,
+		})
+	}
+	if len(assistants) > 0 {
+		groups = append(groups, &UserStatusGroupVM{
+			Title: "Coaches",
+			Users: assistants,
+		})
+	}
+	if len(regulars) > 0 {
+		groups = append(groups, &UserStatusGroupVM{
+			Title: "Regular Users",
+			Users: regulars,
+		})
+	}
+	if len(invited) > 0 {
+		groups = append(groups, &UserStatusGroupVM{
+			Title: "Invited Users",
+			Users: invited,
+		})
+	}
+	if len(banned) > 0 {
+		groups = append(groups, &UserStatusGroupVM{
+			Title: "Banned",
+			Users: banned,
+		})
+	}
+
+	return &mvp.ViewData{
+		View:         "admin/users",
+		Title:        "Users",
+		SemanticPath: "admin/users",
+		Data: struct {
+			Groups []*UserStatusGroupVM
+		}{
+			Groups: groups,
+		},
+	}, nil
+}
+
 func (app *App) handleAdminWhitelist(rc *mvp.RC, in *struct {
 	IsSaving bool `json:"-" form:",issave"`
 }) (any, error) {
@@ -40,23 +124,17 @@ func (app *App) handleAdminWhitelist(rc *mvp.RC, in *struct {
 				adminFormStyle,
 				horizontalFormStyle,
 			},
-			WrapperTag: forms.TagOpts{
-				Class: "my-16",
-			},
 			Children: []forms.Child{
-				&forms.Header{
-					Text: "Whitelist",
-				},
 				&forms.Group{
 					Children: []forms.Child{
 						&forms.Item{
 							Name:  "whitelist",
-							Label: "Whitelisted Emails",
+							Label: "Emails allowed to sign up",
 							Child: &forms.InputText{
 								Template: "control-textarea",
 								TagOpts: forms.TagOpts{
 									Class: "",
-									Attrs: map[string]any{"rows": 3},
+									Attrs: map[string]any{"rows": 15},
 								},
 								Binding:     forms.Var(&whitelistStr),
 								Placeholder: "",
@@ -118,7 +196,7 @@ func (app *App) handleAdminWhitelist(rc *mvp.RC, in *struct {
 	}
 
 	return &mvp.ViewData{
-		View:         "admin/whitelist",
+		View:         "form",
 		Title:        "Whitelist",
 		SemanticPath: "admin/whitelist",
 		Data: struct {

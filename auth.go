@@ -72,9 +72,13 @@ func requireAdmin(rc *RC) (any, error) {
 
 func requireLoggedIn(rc *RC) (any, error) {
 	if !rc.IsLoggedIn() {
-		return rc.App().Redirect("signin"), nil
+		return redirectToLogIn(rc), nil
 	}
 	return nil, nil
+}
+
+func redirectToLogIn(rc *RC) *mvp.Redirect {
+	return rc.App().Redirect("signin")
 }
 
 // func (app *App) makeWebToken(sess *bm.Session, now time.Time) string {

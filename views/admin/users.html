@@ -1,0 +1,17 @@
+{{range .Groups}}
+<section class="space-y-4">
+    <h2 class="text-xl my-4">{{.Title}}</h2>
+
+    <div class="grid grid-cols-autofill-flex-64 gap-4 cursor-pointer">
+        {{range .Users}}
+        <div class="User flex flex-col | p-3 | border hover:border-neutral-500 transition-colors rounded">
+            <div class="text-3xs text-neutral-500">{{.ID}}</div>
+            {{if .Name}}<div>{{.Name}}</div>{{end}}
+            <div>{{.Email}}</div>
+            <div>{{.Membership.Role}}</div>
+            <div>{{.Membership.Status}}</div>
+        </div>
+        {{end}}
+    </div>
+</section>
+{{end}}

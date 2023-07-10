@@ -18,7 +18,7 @@
   </div>
 
   {{if .Role.IsBot}}
-  <form class="flex flex-row items-center gap-0.5 | my-2" method="POST" action="{{url_for $ "chat.messages.mark" "chat" .ChatID "message" .ID}}">
+  <form class="flex flex-row items-center gap-0.5 | my-2" method="POST" action="{{url_for $ "chat.messages.action" ":chat" .ChatID ":message" .ID}}">
     {{if not .VotedUp}}
     <button type="submit" name="action" value="voteup">
       <c-icon src="icons/action-voteup.svg" />

@@ -1,6 +1,6 @@
 <div class="grid grid-cols-autofill-flex-36 gap-4">
   {{range .Tables}}
-  <c-link class="Table block | p-2 | border hover:border-black transition-colors rounded" route="db.table.list" table={{.Name}}>
+  <c-link class="Table block | p-2 | border hover:border-neutral-500 transition-colors rounded" route="db.table.list" table={{.Name}}>
     {{.Name}}
   </c-link>
   {{end}}
