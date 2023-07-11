@@ -44,7 +44,6 @@ func (app *App) importProcedure() *Procedure {
 			},
 		},
 		Handler: func(rc *RC) error {
-			in.Path = "/Users/andreyvit/Developer/lifehack/virtual-demir/_library"
 			flogger.Log(rc, "Root: %s", in.Path)
 
 			loadCurrentAccountLibrary(rc)

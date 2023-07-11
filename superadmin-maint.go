@@ -33,7 +33,7 @@ func (app *App) listSuperadminProcedures(rc *mvp.RC, in *struct{}) (*mvp.ViewDat
 		}
 		slugs[proc.Slug] = true
 
-		proc.Form.URL = app.URL("superadmin.maintenance.run", "procedure", proc.Slug)
+		proc.Form.URL = app.URL("superadmin.maintenance.run", ":procedure", proc.Slug)
 		proc.Form.Group.Children = append(proc.Form.Group.Children, &forms.Wrapper{
 			Template: "buttonbar-compact",
 			Child: forms.Children{
