@@ -17,7 +17,7 @@
     </c-nav-sidebar-group>
     <c-nav-sidebar-group title="All Chats">
       {{range $.RC.Chats}}
-        <c-nav-sidebar-item id="chat_nav_{{.ID}}" title="{{.TitleWithFallback}}" route="mod.chat.view" path-chat={{.ID}} sempath="chat/c/{{.ID}}" />
+        {{template "chat/_nav_item_mod" $.Bind .}}
       {{end}}
     </c-nav-sidebar-group>
     {{else if $.IsActive "admin"}}

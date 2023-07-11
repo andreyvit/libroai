@@ -47,9 +47,10 @@ func (app *App) registerRoutes(b *mvp.RouteBuilder) {
 
 	b.Group("/mod", func(b *mvp.RouteBuilder) {
 		b.UseIn("authorize", requireAdmin)
+		b.Use(loadAllChatListMiddleware)
 
-		b.Route("mod.activity", "GET /", app.showAccountActivity).Use(loadAllChatListMiddleware)
-		b.Route("mod.chat.view", "GET /c/:chat", app.showChat)
+		b.Route("mod.activity", "GET /", app.showAccountActivity)
+		b.Route("mod.chat.view", "GET /c/:chat", app.showModChat)
 	})
 
 	b.Group("/admin", func(b *mvp.RouteBuilder) {

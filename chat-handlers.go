@@ -6,7 +6,6 @@ import (
 	"github.com/andreyvit/edb"
 	"github.com/andreyvit/mvp"
 	"github.com/andreyvit/mvp/flake"
-	"github.com/andreyvit/mvp/flogger"
 	"github.com/andreyvit/mvp/httperrors"
 	"github.com/andreyvit/openai"
 
@@ -32,12 +31,33 @@ func (app *App) showChat(rc *RC, in *struct {
 }
 
 func (app *App) doShowChat(rc *RC, chat *m.Chat) (*mvp.ViewData, error) {
-	flogger.Log(rc, "rc.Chats x2 = %v", rc.Chats)
 	content := loadChatContent(rc, chat.ID)
 	return &mvp.ViewData{
 		View:         "chat/chat",
 		Title:        "Chat",
 		SemanticPath: fmt.Sprintf("chat/c/%v", chat.ID),
+		Data: struct {
+			IsNewChat bool
+			Chat      *m.ChatVM
+		}{
+			IsNewChat: chat.ID == 0,
+			Chat:      m.WrapChat(chat, content),
+		},
+	}, nil
+}
+
+func (app *App) showModChat(rc *RC, in *struct {
+	ChatID flake.ID `form:"chat,path" json:"-"`
+}) (*mvp.ViewData, error) {
+	chat, err := loadChat(rc, in.ChatID, false)
+	if err != nil {
+		return nil, err
+	}
+	content := loadChatContent(rc, chat.ID)
+	return &mvp.ViewData{
+		View:         "chat/chat",
+		Title:        "Chat",
+		SemanticPath: fmt.Sprintf("mod/chat/c/%v", chat.ID),
 		Data: struct {
 			IsNewChat bool
 			Chat      *m.ChatVM

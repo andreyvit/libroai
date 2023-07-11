@@ -231,8 +231,11 @@ func pushMessage(rc *mvp.RC, chatID m.ChatID, msg *m.Message) {
 }
 
 func pushChatTitle(rc *mvp.RC, chat *m.Chat) {
-	mvp.PushPartial(rc, "chat/_nav_item", chat, chat.NavItemHTMLElementID(), chatChannel(chat.ID), mvplive.Envelope{
+	mvp.PushPartial(rc, "chat/_nav_item", chat, chat.UserNavItemHTMLElementID(), chatChannel(chat.ID), mvplive.Envelope{
 		DedupKey: "title",
+	})
+	mvp.PushPartial(rc, "chat/_nav_item_mod", chat, chat.ModNavItemHTMLElementID(), chatChannel(chat.ID), mvplive.Envelope{
+		DedupKey: "title-mod",
 	})
 }
 

@@ -42,8 +42,11 @@ func (chat *Chat) TitleWithFallback() string {
 	return chat.ID.String()
 }
 
-func (chat *Chat) NavItemHTMLElementID() string {
+func (chat *Chat) UserNavItemHTMLElementID() string {
 	return "chat_nav_" + chat.ID.String()
+}
+func (chat *Chat) ModNavItemHTMLElementID() string {
+	return "chat_nav_mod_" + chat.ID.String()
 }
 
 func (cc *ChatContent) LastTurn() *Turn {
