@@ -1,6 +1,8 @@
 package m
 
 import (
+	"fmt"
+
 	"github.com/andreyvit/mvp/flake"
 	"github.com/andreyvit/openai"
 )
@@ -47,6 +49,12 @@ func (chat *Chat) UserNavItemHTMLElementID() string {
 }
 func (chat *Chat) ModNavItemHTMLElementID() string {
 	return "chat_nav_mod_" + chat.ID.String()
+}
+func (chat *Chat) UserChatSempath() string {
+	return fmt.Sprintf("chat/c/%v", chat.ID)
+}
+func (chat *Chat) ModChatSempath() string {
+	return fmt.Sprintf("mod/chat/c/%v", chat.ID)
 }
 
 func (cc *ChatContent) LastTurn() *Turn {

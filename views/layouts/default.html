@@ -17,9 +17,11 @@
   <c-nav-sidebar class="pr-4 py-4 sm:pr-6" style="grid-area: sidebar" />
 
   <main class="flex flex-col space-y-6 | bg-neutral-100 pl-4 py-4 sm:pl-6" style="grid-area: main">
-    <header class="">
+    {{if .TitleVisible -}}
+    <header class="PageTitle">
       <h1 class="text-3xl font-bold leading-tight tracking-tight text-gray-900">{{.Title}}</h1>
     </header>
+    {{- end}}
 
     {{.Content}}
   </main>

@@ -35,13 +35,15 @@ func (app *App) doShowChat(rc *RC, chat *m.Chat) (*mvp.ViewData, error) {
 	return &mvp.ViewData{
 		View:         "chat/chat",
 		Title:        "Chat",
-		SemanticPath: fmt.Sprintf("chat/c/%v", chat.ID),
+		SemanticPath: chat.UserChatSempath(),
 		Data: struct {
-			IsNewChat bool
-			Chat      *m.ChatVM
+			IsModerator bool
+			IsNewChat   bool
+			Chat        *m.ChatVM
 		}{
-			IsNewChat: chat.ID == 0,
-			Chat:      m.WrapChat(chat, content),
+			IsModerator: false,
+			IsNewChat:   chat.ID == 0,
+			Chat:        m.WrapChat(chat, content),
 		},
 	}, nil
 }
@@ -57,13 +59,15 @@ func (app *App) showModChat(rc *RC, in *struct {
 	return &mvp.ViewData{
 		View:         "chat/chat",
 		Title:        "Chat",
-		SemanticPath: fmt.Sprintf("mod/chat/c/%v", chat.ID),
+		SemanticPath: chat.ModChatSempath(),
 		Data: struct {
-			IsNewChat bool
-			Chat      *m.ChatVM
+			IsModerator bool
+			IsNewChat   bool
+			Chat        *m.ChatVM
 		}{
-			IsNewChat: chat.ID == 0,
-			Chat:      m.WrapChat(chat, content),
+			IsModerator: true,
+			IsNewChat:   false,
+			Chat:        m.WrapChat(chat, content),
 		},
 	}, nil
 }

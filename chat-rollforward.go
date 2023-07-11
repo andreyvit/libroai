@@ -108,7 +108,7 @@ func (app *App) runChatRollforward(rc *RC, chatID m.ChatID) error {
 		newBotMsg, newBotMsgErr := openai.StreamChat(rc, history, opt, app.httpClient, app.Settings().OpenAICreds, func(msg *openai.Msg, delta string) error {
 			flogger.Log(rc, "openai chunk: <<<%s>>>", delta)
 			pendingBotMsg.Text = msg.Content
-			pushMessage(&rc.RC, chatID, pendingBotMsg)
+			pushMessage(rc, chatID, pendingBotMsg)
 			return nil
 		})
 
@@ -140,7 +140,7 @@ func (app *App) runChatRollforward(rc *RC, chatID m.ChatID) error {
 			return err
 		}
 		if pendingBotMsg != nil {
-			pushMessage(&rc.RC, chatID, pendingBotMsg)
+			pushMessage(rc, chatID, pendingBotMsg)
 		}
 	}
 
@@ -218,23 +218,34 @@ func (app *App) runChatRollforward(rc *RC, chatID m.ChatID) error {
 			return err
 		}
 
-		pushChatTitle(&rc.RC, chat)
+		pushChatTitle(rc, chat)
 	}
 
 	return nil
 }
 
-func pushMessage(rc *mvp.RC, chatID m.ChatID, msg *m.Message) {
-	mvp.PushPartial(rc, "chat/_message", m.WrapMessage(msg, chatID), msg.HTMLElementID(), chatChannel(chatID), mvplive.Envelope{
+func pushMessage(rc *RC, chatID m.ChatID, msg *m.Message) {
+	mvp.PushPartial(rc, &mvp.ViewData{
+		View: "chat/_message",
+		Data: m.WrapMessage(msg, chatID),
+	}, msg.HTMLElementID(), chatChannel(chatID), mvplive.Envelope{
 		DedupKey: msg.ID.String(),
 	})
 }
 
-func pushChatTitle(rc *mvp.RC, chat *m.Chat) {
-	mvp.PushPartial(rc, "chat/_nav_item", chat, chat.UserNavItemHTMLElementID(), chatChannel(chat.ID), mvplive.Envelope{
+func pushChatTitle(rc *RC, chat *m.Chat) {
+	mvp.PushPartial(rc, &mvp.ViewData{
+		View:         "chat/_nav_item",
+		Data:         chat,
+		SemanticPath: chat.UserChatSempath(),
+	}, chat.UserNavItemHTMLElementID(), chatChannel(chat.ID), mvplive.Envelope{
 		DedupKey: "title",
 	})
-	mvp.PushPartial(rc, "chat/_nav_item_mod", chat, chat.ModNavItemHTMLElementID(), chatChannel(chat.ID), mvplive.Envelope{
+	mvp.PushPartial(rc, &mvp.ViewData{
+		View:         "chat/_nav_item_mod",
+		Data:         chat,
+		SemanticPath: chat.ModChatSempath(),
+	}, chat.ModNavItemHTMLElementID(), chatChannel(chat.ID), mvplive.Envelope{
 		DedupKey: "title-mod",
 	})
 }
