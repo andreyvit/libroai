@@ -233,7 +233,7 @@ func (app *App) switchAccount(rc *RC, in *struct {
 	ReturnPath   string   `json:"return_to"`
 }) (*mvp.Redirect, error) {
 	flogger.Log(rc, "Switch to account %v start...", in.NewAccountID)
-	acc := edb.Get[m.Account](rc, in.NewAccountID)
+	acc := loadRuntimeAccount(rc, in.NewAccountID)
 	if acc == nil {
 		return nil, m.ErrForbiddenWrongAccount
 	}

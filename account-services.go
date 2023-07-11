@@ -21,7 +21,7 @@ func (app *App) initAccount(rc *RC, account *m.Account) {
 
 func (app *App) initAccountMiddleware(rc *RC) (any, error) {
 	if rc.DBTx().IsWritable() && rc.Account != nil {
-		app.initAccount(rc, rc.Account)
+		app.initAccount(rc, rc.Account.Account)
 	}
 	return nil, nil
 }

@@ -1,3 +1,7 @@
 <!-- <a href="#" class="{{.class}}" role="{{.role}}" tabindex="-1">Your Profile</a> -->
 <!-- <a href="#" class="{{.class}}" role="{{.role}}" tabindex="-1">Settings</a> -->
+<div class="ml-3">
+  <div class="text-base font-medium text-gray-800">{{$.RC.User.Name}}</div>
+  <div class="text-sm font-medium text-gray-500">{{$.RC.User.Email}}</div>
+</div>
 <form method="POST" action="{{url_for $ "signout"}}" class="flex flex-col items-stretch"><button type="submit" class="{{.class}} text-left" role="{{.role}}">Sign out</button></form>

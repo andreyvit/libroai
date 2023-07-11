@@ -61,13 +61,16 @@ var (
 	Chats = edb.AddTable(dbSchema, "chats", 1, func(row *m.Chat, ib *edb.IndexBuilder) {
 		ib.Add(ChatsByAccount, row.AccountID)
 		ib.Add(ChatsByUser, row.UserID)
+		ib.Add(ChatsByAccountUser, m.AccountUser(row.AccountID, row.UserID))
 	}, func(tx *edb.Tx, row *m.Chat, oldVer uint64) {
 	}, []*edb.Index{
 		ChatsByUser,
 		ChatsByAccount,
+		ChatsByAccountUser,
 	})
-	ChatsByAccount = edb.AddIndex[m.AccountID]("by_account")
-	ChatsByUser    = edb.AddIndex[m.UserID]("by_user")
+	ChatsByAccount     = edb.AddIndex[m.AccountID]("by_account")
+	ChatsByUser        = edb.AddIndex[m.UserID]("by_user")
+	ChatsByAccountUser = edb.AddIndex[m.AccountUserKey]("by_au")
 
 	ChatContent = edb.AddTable(dbSchema, "chat_content_02", 1, func(row *m.ChatContent, ib *edb.IndexBuilder) {
 	}, func(tx *edb.Tx, row *m.ChatContent, oldVer uint64) {

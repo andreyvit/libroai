@@ -41,7 +41,7 @@ func loadSessionAndUser(app *App, rc *RC) error {
 		rc.User = rc.OriginalUser
 	}
 	if rc.Session != nil && rc.OriginalUser != nil && rc.Session.AccountID != 0 {
-		rc.Account = edb.Get[m.Account](rc, rc.Session.AccountID)
+		rc.Account = loadRuntimeAccount(rc, rc.Session.AccountID)
 		if rc.Account == nil {
 			rc.Session.AccountID = 0
 			flogger.Log(rc, "WARNING: session refers to non-existent account %v", rc.Session.AccountID)

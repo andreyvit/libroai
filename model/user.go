@@ -2,7 +2,9 @@ package m
 
 import (
 	"errors"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/andreyvit/mvp/flake"
 	mvpm "github.com/andreyvit/mvp/mvpmodel"
@@ -21,6 +23,11 @@ type (
 		LoginMsg    string            `msgpack:"msg,omitempty"`
 	}
 
+	AccountUserKey struct {
+		AccountID AccountID
+		UserID    UserID
+	}
+
 	UserMembershipID = flake.ID
 
 	UserMembership struct {
@@ -32,6 +39,33 @@ type (
 		Comment      UserSource      `msgpack:"c,omitempty"`
 	}
 )
+
+func AccountUser(a AccountID, u UserID) AccountUserKey {
+	return AccountUserKey{a, u}
+}
+
+func (u *User) FirstNameWithInitials() string {
+	words := strings.Fields(u.Name)
+	var buf strings.Builder
+	for i, word := range words {
+		if i == 0 {
+			buf.WriteString(word)
+		} else {
+			buf.WriteByte(' ')
+
+			_, n := utf8.DecodeRuneInString(word)
+			buf.WriteString(word[:n])
+		}
+	}
+	return buf.String()
+}
+
+func (u *User) FirstName() string {
+	if first, _, ok := strings.Cut(u.Name, " "); ok {
+		return first
+	}
+	return u.Name
+}
 
 func (obj *User) FlakeID() flake.ID {
 	return obj.ID

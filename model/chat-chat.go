@@ -29,6 +29,7 @@ type (
 
 	ChatVM struct {
 		*Chat
+		Author   *User
 		Messages []*MessageVM
 	}
 )
@@ -120,6 +121,19 @@ func (cc *ChatContent) FreshMessage(staleMsg *Message) *Message {
 
 func (cc *ChatContent) Message(turnIndex int, msgID MessageID) *Message {
 	return cc.Turns[turnIndex].Message(msgID)
+}
+
+func (chat *ChatVM) AuthorNameWithFallback() string {
+	if chat.Author == nil {
+		return "Anonymous"
+	} else {
+		return chat.Author.FirstNameWithInitials()
+	}
+}
+
+func (chat *ChatVM) TitleWithAuthor() string {
+	title := chat.Chat.TitleWithFallback()
+	return chat.AuthorNameWithFallback() + ": " + title
 }
 
 func WrapChat(chat *Chat, content *ChatContent) *ChatVM {

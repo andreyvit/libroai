@@ -6,6 +6,6 @@ import (
 )
 
 func loadAllChatListMiddleware(rc *RC) (any, error) {
-	rc.Chats = edb.All(edb.IndexScan[m.Chat](rc, ChatsByAccount, edb.ExactScan(rc.AccountID()).Reversed()))
+	rc.Chats = wrapChatList(rc, edb.All(edb.ReverseExactIndexScan[m.Chat](rc, ChatsByAccount, rc.AccountID())))
 	return nil, nil
 }

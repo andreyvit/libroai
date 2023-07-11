@@ -2841,8 +2841,9 @@ select {
 }
 
 .turbo-progress-bar {
-  height: 10px;
-  background-color: green;
+  height: 3px;
+  --tw-bg-opacity: 1;
+  background-color: rgb(20 184 166 / var(--tw-bg-opacity));
 }
 
 .placeholder\:text-gray-400::-moz-placeholder {

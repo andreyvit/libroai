@@ -24,6 +24,8 @@
         {{template "chat/_message" ($.Bind .)}}
       {{end}}
     </div>
+
+    {{if not .IsModerator}}
     <div class="BottomBar fixed bottom-0 left-0 w-full pointer-events-none">
       <div class="InputBar relative | max-w-prose mx-auto md:my-4 px-6 py-2 | bg-white border-t md:border border-gray-200 md:shadow md:rounded-l pointer-events-none">
         <form class="flex flex-row align-start pointer-events-auto" method="POST" action="{{url_for $ "chat.messages.send" ":chat" .Chat.ID}}">
@@ -34,6 +36,7 @@
         </form>
       </form>
     </div>
+    {{end}}
   </div>
   <!-- <div class="Sidebar hidden | order-1 w-52 | bg-zinc-200"></div> -->
 </div>

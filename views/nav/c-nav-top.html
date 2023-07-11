@@ -1,7 +1,9 @@
 <c-link route="chat.home" sempath="chat" class={{.class}} active-class={{.active_class}} inactive-class={{.inactive_class}}>Chat</c-link>
+{{if can $ "access-admin-area" -}}
 <c-link route="lib.home" sempath="lib" class={{.class}} active-class={{.active_class}} inactive-class={{.inactive_class}}>Library</c-link>
 <c-link route="mod.activity" sempath="mod" class={{.class}} active-class={{.active_class}} inactive-class={{.inactive_class}}>Moderate</c-link>
 <c-link route="admin.users" sempath="admin" class={{.class}} active-class={{.active_class}} inactive-class={{.inactive_class}}>Admin</c-link>
+{{- end}}
 {{if can $ "access-superadmin-area" -}}
 <c-link route="superadmin.accounts" sempath="superadmin" class={{.class}} active-class={{.active_class}} inactive-class={{.inactive_class}}>SuperAdmin</c-link>
 {{- end}}

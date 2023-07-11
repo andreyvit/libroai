@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -30,7 +31,7 @@ var (
 	embeddedConfig []byte
 	//go:embed config.secrets.txt
 	embeddedSecrets string
-	//go:embed views
+	//go:embed all:views
 	embeddedViewsFS embed.FS
 	//go:embed static
 	embeddedStaticAssetsFS embed.FS
@@ -95,6 +96,9 @@ type App struct {
 	users                atomic.Value
 	httpClient           *http.Client
 	dangerousRateLimiter *rate.Limiter
+
+	runtimeAccountsByID map[m.AccountID]*m.RuntimeAccount
+	runtimeAccountsMut  sync.RWMutex
 }
 
 func (app *App) Settings() *Settings {
@@ -106,9 +110,9 @@ type RC struct {
 	Session      *m.Session
 	User         *m.User
 	OriginalUser *m.User
-	Account      *m.Account
+	Account      *m.RuntimeAccount
 
-	Chats   []*m.Chat
+	Chats   []*m.ChatVM
 	Library *m.AccountLibrary
 }
 

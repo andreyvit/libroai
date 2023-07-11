@@ -40,6 +40,19 @@ func loadChatContent(rc *RC, chatID m.ChatID) *m.ChatContent {
 }
 
 func loadUserChatListMiddleware(rc *RC) (any, error) {
-	rc.Chats = edb.All(edb.IndexScan[m.Chat](rc, ChatsByUser, edb.ExactScan(rc.UserID()).Reversed()))
+	loadRuntimeAccount(rc, rc.AccountID())
+	rc.Chats = wrapChatList(rc, edb.All(edb.ReverseExactIndexScan[m.Chat](rc, ChatsByAccountUser, m.AccountUser(rc.AccountID(), rc.UserID()))))
 	return nil, nil
+}
+
+func wrapChatList(rc *RC, rawChats []*m.Chat) []*m.ChatVM {
+	chats := make([]*m.ChatVM, 0, len(rawChats))
+	for _, rawChat := range rawChats {
+		chat := &m.ChatVM{
+			Chat:   rawChat,
+			Author: rc.Account.UserByID(rawChat.UserID),
+		}
+		chats = append(chats, chat)
+	}
+	return chats
 }
